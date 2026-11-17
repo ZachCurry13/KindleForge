@@ -13,7 +13,7 @@ trap 'rm -rf "$STAGE"' EXIT
 
 echo "Building KFPM $VERSION (linux/arm)..."
 (cd KFPM && go test ./... >/dev/null && GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 \
-  go build -trimpath -ldflags="-s -w" -o ../KindleForge/KindleForge/binaries/KFPM .)
+  go build -trimpath -buildvcs=false -ldflags="-s -w" -o ../KindleForge/KindleForge/binaries/KFPM .)
 if command -v upx >/dev/null 2>&1; then upx --best --lzma -q KindleForge/KindleForge/binaries/KFPM >/dev/null; fi
 
 cp -r KindleForge/KindleForge "$STAGE/KindleForge"
