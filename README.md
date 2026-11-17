@@ -1,10 +1,7 @@
 # KindleForge 📦
 
-> [!CAUTION]
-> KindleForge is under **maintenance mode**. It will need to be re-written using KPM in the backend. If you are using `hdnext`, an ABI error is expected and I am choosing not to fix it because it isn't ideal for use alongside KPM/the new jailbreak stack anyway. There's currently no real ETA.
-
 > [!NOTE]
-> Welcome To KindleForge 4! [Packages](https://github.com/KindleTweaks/Repository)
+> **KPM Edition (personal fork).** The backend now delegates all package work to the native [KPM](https://github.com/KindleModding/KPM) CLI and reads live KPM repositories (default: [KindleTweaks/Repo](https://kindletweaks.github.io/Repo/manifest.json)). **Requires KPM on the device** (ships with `hdnext` / jb.sh). Not yet tested on hardware.
 
 <a href='https://ko-fi.com/W7W31J9IS0' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi5.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -23,9 +20,10 @@ KindleForge is a GUI Appstore for Kindles, allowing you to download & install tw
 
 ## Features
 
-- Reliable installation flow
-- Smooth scroll, pretty frontend & UI
-- Multiple packages
+- Installs through the native KPM package manager
+- Search, category tabs and Install / Update / Uninstall buttons
+- Paginated, high-contrast e-ink UI (no scrolling, no animation)
+- Multiple repositories via `repos.json`, with an offline cache
 - Hard-float and soft-float support
 - Active community & support
 
@@ -70,35 +68,32 @@ A: Chances are, you've installed KindleForge incorrectly. **BOTH the folder AND 
 
 A: You must be on the latest hotfix, 2.3.1+. Use the steps mentioned above to reinstall hotfix
 
-**Q: No apps load and I'm getting "Unknown ABI!"**
+**Q: No apps load!**
 
-A: This happens commonly after you fix the core dump issue, please use the "Update KForge" functionality in-app to resolve. 
-
-If this doesn't work:
-
-1. Remove:
-   -  documents/KindleForge.sh
-   -  documents/KindleForge
-2. Reboot
-3. Re-install with the above steps.
+A: Tap *Refresh* (needs Wi-Fi once). Check that KPM exists at `/var/local/kmc/bin/kpm`, and look at `/mnt/us/.KFPM/last.log` (also viewable in-app via *Details > View log*).
 
 **Q: App is installing/uninstalling forever!**
 
-A: Could be caused by a multitude of issues such as beginning the install without wifi, DNS stuff. You can press "refresh packages" in the top bar to clear the lock and retry, or reboot.
+A: Could be caused by a multitude of issues such as beginning the install without wifi, DNS stuff. Press *Refresh* to clear the lock and retry, or reboot. Operations time out after 5 minutes.
+
+## Repositories & data
+
+KFPM keeps its data in `/mnt/us/.KFPM/`:
+
+- `repos.json` - list of KPM manifest URLs (seeded with KindleTweaks) plus an optional package-id to category map for the store tabs
+- `catalog.json` - merged catalog the UI reads (rewritten by KFPM)
+- `cache/` - last good copy of each manifest, used when offline
+- `last.log` - output of the most recent operation
 
 ## Building & Contribution
 
-To build KFPM in testing, you can use the command `GOOS=linux GOARCH=arm GOARM=7 go build main.go`.
-
-To build a trimmed binary for production, use (`10MB -> 1MB` reductions);
-
 ```
-GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o KFPM main.go
-~/x-tools/arm-kindlehf-linux-gnueabihf/bin/arm-kindlehf-linux-gnueabihf-strip KFPM
-upx --best --lzma KFPM
+cd KFPM
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o ../KindleForge/KindleForge/binaries/KFPM .
+upx --best --lzma ../KindleForge/KindleForge/binaries/KFPM   # optional: ~7MB -> ~1.6MB
 ```
 
-(Requires `UPX` on WSL, & ArmHF `koxtoolchain`!)
+Desktop testing: set `KFPM_DATA_DIR`, `KFPM_KPM`, `KFPM_DB` and `KFPM_PLATFORM` to point KFPM at a fake `kpm` and a test database. The frontend loads data from `./dev/` when not served from `file://`.
 
 KindleForge is licensed under `GPLv3`, with all other KindleTweaks projects (including the KindleForge Repository) being licensed under `CC BY-NC-SA 4.0`.
 
