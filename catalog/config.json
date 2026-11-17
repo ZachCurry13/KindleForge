@@ -5,7 +5,7 @@
       "url": "https://kindletweaks.github.io/Repo/manifest.json"
     }
   ],
-  "ratingsURL": "",
+  "ratingsURL": "https://kindleforge-ratings.kindleforge-ratings.workers.dev",
   "categories": {
     "kuala": "utilities",
     "gargoyle": "games",

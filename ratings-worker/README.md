@@ -17,18 +17,18 @@ npx wrangler d1 create kindleforge-ratings           # prints a database_id
 npx wrangler d1 execute kindleforge-ratings --remote --file=schema.sql
 npx wrangler secret put SALT                         # any long random string
 npx wrangler secret put ADMIN_TOKEN                  # optional: lets you delete a package's votes
-npx wrangler deploy                                  # prints https://kindleforge-ratings.<you>.workers.dev
+npx wrangler deploy                                  # prints https://kindleforge-ratings.kindleforge-ratings.workers.dev
 ```
 
 Check it:
 
 ```bash
-curl https://kindleforge-ratings.<you>.workers.dev/health        # ok
-curl https://kindleforge-ratings.<you>.workers.dev/aggregate     # {"packages":{}...}
+curl https://kindleforge-ratings.kindleforge-ratings.workers.dev/health        # ok
+curl https://kindleforge-ratings.kindleforge-ratings.workers.dev/aggregate     # {"packages":{}...}
 ```
 
 ## Connect it to KindleForge
-1. In `catalog/config.json` set `"ratingsURL": "https://kindleforge-ratings.<you>.workers.dev"` and push. Kindles pick it up on their next Refresh (no app update needed). Empty = ratings off.
+1. In `catalog/config.json` set `"ratingsURL": "https://kindleforge-ratings.kindleforge-ratings.workers.dev"` and push. Kindles pick it up on their next Refresh (no app update needed). Empty = ratings off.
 2. In the GitHub repo: Settings > Secrets and variables > Actions > **Variables** > `RATINGS_URL` = the same URL. (On a fork, enable Actions on the Actions tab first.)
 3. Run the **Update ratings** workflow once (Actions tab > Run workflow). It then runs every 6 hours.
 
