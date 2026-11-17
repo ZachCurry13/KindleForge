@@ -1,11 +1,7 @@
 # KindleForge 📦
 
 > [!NOTE]
-> **KPM Edition (personal fork).** The backend now delegates all package work to the native [KPM](https://github.com/KindleModding/KPM) CLI and reads live KPM repositories (default: [KindleTweaks/Repo](https://kindletweaks.github.io/Repo/manifest.json)). **Requires KPM on the device** (ships with `hdnext` / jb.sh). Not yet tested on hardware.
-
-<a href='https://ko-fi.com/W7W31J9IS0' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi5.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
-
-*Like [my](https://penguins184.xyz/) work? Consider donating or just starring my repo! :)*
+> **KPM Edition.** A fork of [KindleTweaks/KindleForge](https://github.com/KindleTweaks/KindleForge) by Penguins184. The backend now delegates all package work to the native [KPM](https://github.com/KindleModding/KPM) CLI and reads live KPM repositories (default: [KindleTweaks/Repo](https://kindletweaks.github.io/Repo/manifest.json)), and the UI is rebuilt for e-ink. **Requires KPM on the device** (ships with `hdnext` / jb.sh). **Pre-release: not yet tested on real hardware**, see [TESTING.md](TESTING.md).
 
 KindleForge is a GUI Appstore for Kindles, allowing you to download & install tweaks & applications such as KOReader directly on-device, without having to keep copying files locally.
 
@@ -14,8 +10,9 @@ KindleForge is a GUI Appstore for Kindles, allowing you to download & install tw
 > [!CAUTION]
 > Ensure you are on the latest hotfix prior to installation! Older hotfixes could potentially cause bricks! As always, jailbreak at your own risk ;) **Hotfixes 2.3.1 and above should work fine.**
 
-1. Copy `KindleForge/` and `KindleForge.sh` from the `KindleForge/` folder of this repo into the `documents/` folder on your Kindle (there is no release zip for this fork).
-2. Run the scriptlet, then tap *Refresh* in the app.
+1. Download the zip from the [latest release](https://github.com/ZachCurry13/KindleForge/releases/latest) and unzip it.
+2. Copy `KindleForge/` and `KindleForge.sh` into the `documents/` folder on your Kindle.
+3. Run the scriptlet, then tap *Refresh* in the app.
 
 Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 
@@ -26,22 +23,23 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 - Paginated, high-contrast e-ink UI (no scrolling, no animation)
 - Multiple repositories via `repos.json`, with an offline cache
 - Hard-float and soft-float support
-- Active community & support
 
-<img width="536" height="724" alt="UI" src="https://github.com/user-attachments/assets/a619e79d-b436-49e2-a52e-85bcd085f7c8" />
+<img width="380" alt="Store list" src="docs/screenshots/store-list.jpg" /> <img width="380" alt="Details view" src="docs/screenshots/details.jpg" />
+
+*Desktop-browser renders at 758x1024; not photos of a Kindle.*
 
 ## Minimum Requirements
 
-- AdBreak, WinterBreak, or LanguageBreak
+- A jailbroken Kindle (AdBreak, WinterBreak, LanguageBreak, ...) with **KPM installed**
 - Latest Universal Hotfix
 - Above or on the 5.12.2.2 firmware (4.1.0 adds Chromebar fixes; Application Errors fixed with Hotfix 2.3.7+)
 - Both **hard-float and soft-float** kindles should work, but not all packages may support both architectures.
 
 ## Troubleshooting
 
-Try reloading multiple times, rebooting, or re-copying assets from the latest release and trying again.
+Try reloading multiple times, rebooting, or re-copying the files from the latest release and trying again.
 
-KindleTweaks project suggestions? Tweak suggestions? Feature requests? Check out our [discord](https://discord.gg/aSG3eMsAsW)
+Problems with this fork: open an [issue](https://github.com/ZachCurry13/KindleForge/issues). The original project's community: [discord](https://discord.gg/aSG3eMsAsW).
 
 ### Hotfix
 
@@ -105,7 +103,3 @@ KindleForge is licensed under `GPLv3`, with all other KindleTweaks projects (inc
 - Clint, event & KFPM troubleshooting, scroll help
 - Dammit Jeff, repository icons
 - ThatPotatoDev, ABI differentiation, dependencies, & tweak support
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=KindleTweaks/KindleForge&type=date&legend=top-left)](https://www.star-history.com/#KindleTweaks/KindleForge&type=date&legend=top-left)

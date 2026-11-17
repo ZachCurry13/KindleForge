@@ -8,19 +8,17 @@
 - Wi-Fi for refreshing the package list and installing. Browsing the saved list works offline.
 
 ## Get the files
-This fork has no release zip. Take them straight from the repo:
+Download the zip from the [latest release](https://github.com/ZachCurry13/KindleForge/releases/latest) and unzip it. It contains the `KindleForge/` folder, `KindleForge.sh`, `KFPM-Diag.sh` and these docs.
+
+To build from source instead:
 
 ```bash
-git clone <your fork URL> KindleForge-src
-cd KindleForge-src
-git checkout kpm-edition
+git clone https://github.com/ZachCurry13/KindleForge.git
 ```
 
-You need two items from the `KindleForge/` folder in the repo:
-- the `KindleForge/` **folder** (contains the app and `binaries/`)
-- `KindleForge.sh`
+then take the `KindleForge/KindleForge/` folder and `KindleForge/KindleForge.sh`, after building KFPM as described in the README.
 
-Optional but recommended: shrink the backend binary first (about 7 MB down to 1.6 MB):
+Optional, if you build it yourself: shrink the backend binary first (about 7 MB down to 1.6 MB):
 
 ```bash
 upx --best --lzma KindleForge/KindleForge/binaries/KFPM
