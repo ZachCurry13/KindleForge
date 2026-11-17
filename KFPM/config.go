@@ -17,7 +17,7 @@ import (
 // Config holds every path/tunable KFPM uses. Each can be overridden through an
 // environment variable so the tool can be exercised on a desktop machine.
 type Config struct {
-	DataDir     string // KFPM_DATA_DIR    : repos.json, catalog.json, cache/, last.log
+	DataDir     string // KFPM_DATA_DIR    : repos.json, catalog.json, cache/, last-log.txt
 	KPMPath     string // KFPM_KPM         : kpm executable
 	DBPath      string // KFPM_DB          : KPM sqlite database
 	PkgDir      string // KFPM_PKG_DIR     : KPM package folder (fallback for installed state)

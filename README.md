@@ -22,6 +22,7 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 - Search, category tabs and Install / Update / Uninstall buttons
 - Paginated, high-contrast e-ink UI (no scrolling, no animation)
 - Multiple repositories, with an offline cache. The catalog definition updates from GitHub without a new app release
+- **Both package repositories in one store:** the gingrspacecadet/kpm packages, and the KindleTweaks repository (KUALA, Gargoyle, KinAMP, LARK, RAnki), which KindleForge installs itself, with real version tracking and Update buttons
 - **Anonymous ratings:** rate packages you installed (1-5); averages show on the cards once a package has enough votes. See [ratings-worker](ratings-worker/README.md) for what is stored.
 - **Clean Up Kindle** (menu): scans for crash dumps and leftovers, you choose what to move to a restorable trash; fixed allowlist, never touches your books
 - In-app self-update from GitHub releases, with checksum verification and rollback
@@ -72,7 +73,7 @@ A: You must be on the latest hotfix, 2.3.1+. Use the steps mentioned above to re
 
 **Q: No apps load!**
 
-A: Tap *Refresh* (needs Wi-Fi once). Check that KPM exists at `/var/local/kmc/bin/kpm`, and look at `/mnt/us/.KFPM/last.log` (also viewable in-app via *Details > View log*).
+A: Tap *Refresh* (needs Wi-Fi once). Check that KPM exists at `/var/local/kmc/bin/kpm`, and look at `/mnt/us/.KFPM/last-log.txt` (also viewable in-app via *Details > View log*).
 
 **Q: App is installing/uninstalling forever!**
 
@@ -87,7 +88,7 @@ KFPM keeps its data in `/mnt/us/.KFPM/`:
 - `cache/config.json` - last good copy of the GitHub catalog definition (`catalog/config.json` in this repo)
 - `catalog.json` - merged catalog the UI reads (rewritten by KFPM)
 - `cache/` - last good copy of each manifest, used when offline
-- `last.log` - output of the most recent operation
+- `last-log.txt` - output of the most recent operation
 
 ## Building & Contribution
 

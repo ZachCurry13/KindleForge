@@ -37,7 +37,7 @@ var cleanCategories = []CleanCategory{
 	{"crash", "Crash dumps", "Crash reports the Kindle saved when a system process or the browser crashed (pillowd_*, mesquite_* ... _crash).", true},
 	{"oldforge", "Old KindleForge leftovers", "KF-Update-Temp, KFPM-Temporary and the old installed.txt from the original KindleForge.", true},
 	{"dumps", "Indexer dumps", "Indexer_Dump_*.txt diagnostic files.", true},
-	{"diag", "KindleForge test reports", "kfpm-diag.txt and kfpm-net.txt written by the diagnostics scriptlets.", true},
+	{"diag", "KindleForge logs and test reports", "kindleforge-log.txt, the last-run log, and kfpm-diag.txt / kfpm-net.txt from the test scriptlets. Logs are recreated when needed.", true},
 	{"kfupdate", "KindleForge download leftovers", "Temporary files from interrupted updates.", true},
 	{"orphansdr", "Orphaned book data (.sdr)", "Reading progress and highlights for books that are no longer on the Kindle. Removing them loses that data if you re-add the book.", false},
 }
@@ -169,10 +169,12 @@ func scanCleanup(c Config) []CleanItem {
 		}
 	}
 
-	// our own test reports
-	for _, n := range []string{"kfpm-diag.txt", "kfpm-net.txt"} {
+	// our own logs and test reports
+	for _, n := range []string{"kfpm-diag.txt", "kfpm-net.txt", historyName} {
 		add(c, &items, "diag", filepath.Join(c.UserRoot, n))
 	}
+	add(c, &items, "diag", c.path("last-log.txt"))
+	add(c, &items, "diag", c.path("last.log")) // name used by older versions
 
 	// interrupted update downloads
 	add(c, &items, "kfupdate", c.path("update"))

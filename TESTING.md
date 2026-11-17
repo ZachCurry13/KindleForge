@@ -23,7 +23,7 @@ Check each section of that file:
 | `KFPM -abi` | `ABI: hf (platform: kindlehf)` or `sf (...kindlepw2)` | Wrong platform => packages hidden |
 | `KFPM -s -v` | `Catalog updated: N packages` | Paste the output |
 | `KFPM -a` | package list, repo shown as `(network)` | |
-| `data dir` | `catalog.json`, `repos.json`, `cache/kindletweaks.json`, `last.log` | |
+| `data dir` | `catalog.json`, `repos.json`, `cache/kindletweaks.json`, `last-log.txt` | |
 
 ## 2. UI loads
 - [ ] Launch KindleForge. Footer shows **JS Working!**, **ABI: hf/sf**, and **List: <date>**.
@@ -56,16 +56,22 @@ Use a small, harmless package first (e.g. KUALA).
 
 ## 5a. gingrspacecadet/kpm devices (`/usr/local/bin/kpm`, `/mnt/us/kpm/packages.list`)
 - [ ] Footer shows `KPM: gingr`; the store lists names with descriptions (no `musl`, `apk`, `make`... entries).
-- [ ] **Install** a small one (e.g. `hello`): banner, then card shows INSTALLED and the id appears in `/mnt/us/kpm/packages.list`. Real `kpm -S` output format is [unverified]; check `last.log` if it fails. (Needs `unzip`, `curl` and a writable `/usr/local`.)
+- [ ] **Install** a small one (e.g. `hello`): banner, then card shows INSTALLED and the id appears in `/mnt/us/kpm/packages.list`. Real `kpm -S` output format is [unverified]; check `last-log.txt` if it fails. (Needs `unzip`, `curl` and a writable `/usr/local`.)
 - [ ] **Uninstall** it: removed from `packages.list`.
 - [ ] Update All reports a clear "not supported" failure (expected).
 
 ## 5b. Updates (needs two published releases; install an older one first)
 - [ ] After Refresh, if a newer release exists, the black **"KindleForge X is available"** banner shows. **What's new** shows the notes.
 - [ ] System menu > **Check for KindleForge Update** reports "up to date" or "available".
-- [ ] **Update KindleForge**: banner "Updating KindleForge...", then "Updated... Restarting", the app reloads and the footer shows the new `vX`. **Swap/reload on a real device is [unverified]**; if it hangs, check `/mnt/us/.KFPM/last.log` and that `/var/local/mesquite/KindleForge` still has `index.html` (a `.old` folder next to it means a swap was interrupted).
+- [ ] **Update KindleForge**: banner "Updating KindleForge...", then "Updated... Restarting", the app reloads and the footer shows the new `vX`. **Swap/reload on a real device is [unverified]**; if it hangs, check `/mnt/us/.KFPM/last-log.txt` and that `/var/local/mesquite/KindleForge` still has `index.html` (a `.old` folder next to it means a swap was interrupted).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
+
+## 5e. KindleTweaks packages (KUALA, Gargoyle, ...) on a gingr-only Kindle
+- [ ] They appear in the store with versions. Install **KUALA** (small): card shows INSTALLED v1.1.0, `documents/kuala.sh` and `/mnt/us/kuala` exist. [unverified on device: hooks, `/bin/sh`]
+- [ ] Uninstall it: both are removed.
+- [ ] **Update All Packages** says it updated 0 / nothing, instead of failing.
+- [ ] After a failure: **View log** shows text; `kindleforge-log.txt` exists at the top level and keeps history.
 
 ## 5c. Clean Up Kindle
 - [ ] System menu > Clean Up Kindle shows a scan with free space and categories. [unverified on device: `/mnt/us` is a FUSE filesystem; renaming into `.KFPM/trash` should work but check.]
@@ -81,4 +87,4 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Re-run `KindleForge.sh` (or use a new release copy): `/mnt/us/.KFPM/` (repos, cache, catalog) survives and installed packages are unaffected.
 
 ## What to send back
-For any failure: the relevant section of `kfpm-diag.txt`, plus `/mnt/us/.KFPM/last.log`, your Kindle model, and firmware version. With that I can fix issues without guessing.
+For any failure: the relevant section of `kfpm-diag.txt`, plus `/mnt/us/.KFPM/last-log.txt`, your Kindle model, and firmware version. With that I can fix issues without guessing.

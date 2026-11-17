@@ -131,8 +131,7 @@ func parseManifest(data []byte) (Manifest, error) {
 func loadManifest(c Config, r Repo, online bool) (Manifest, string) {
 	cp := cachePath(c, r)
 	if online {
-		client := &http.Client{Timeout: 20 * time.Second}
-		resp, err := client.Get(r.URL)
+		resp, err := httpClient.Get(r.URL)
 		if err == nil {
 			data, rerr := io.ReadAll(resp.Body)
 			resp.Body.Close()

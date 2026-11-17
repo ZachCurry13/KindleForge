@@ -195,6 +195,57 @@ func buildGingrCatalog(c Config, rf ReposFile, online bool) Catalog {
 		}
 		cat.Packages = append(cat.Packages, p)
 	}
+	// Packages from KindleModding-style manifests (installed by KFPM itself).
+	// A manifest package wins over a gingr package with the same id.
+	srcs, mstat := kpkgSources(c, rf, online)
+	cat.Repos = append(cat.Repos, mstat...)
+	kinst := loadKpkgInstalled(c)
+	kept := cat.Packages[:0]
+	for _, p := range cat.Packages {
+		if _, dup := srcs[p.ID]; !dup {
+			kept = append(kept, p)
+		}
+	}
+	cat.Packages = kept
+	for _, id := range sortedKeys(srcs) {
+		s := srcs[id]
+		rec, isInst := kinst[id]
+		if hidden[id] && !isInst {
+			continue
+		}
+		m := rf.Packages[id]
+		p := CatPackage{
+			ID: id, Name: s.Pkg.Name, Author: s.Pkg.Author, Description: s.Pkg.Description,
+			Repo: s.Repo.ID, Category: rf.Categories[id], Dependencies: []string{},
+			Installed: isInst,
+		}
+		if p.Name == "" {
+			p.Name = id
+		}
+		if p.Category == "" {
+			p.Category = m.Category
+		}
+		if s.Art != nil {
+			p.Supported = true
+			p.Version = s.Art.Version.String()
+			p.Dependencies = depIDs(s.Art.Deps)
+		}
+		if isInst {
+			p.InstalledVersion = rec.Version
+			p.UpdateAvailable = s.Art != nil && s.Art.Version.Cmp(parseVersionString(rec.Version)) > 0
+		}
+		cat.Packages = append(cat.Packages, p)
+	}
+	for _, id := range sortedKeys(kinst) { // installed from a repo we no longer list
+		if _, ok := srcs[id]; ok {
+			continue
+		}
+		cat.Packages = append(cat.Packages, CatPackage{
+			ID: id, Name: id, Repo: kinst[id].Repo, Category: rf.Categories[id], Supported: true,
+			Installed: true, InstalledVersion: kinst[id].Version, Dependencies: []string{},
+		})
+	}
+
 	sort.SliceStable(cat.Packages, func(i, j int) bool {
 		return strings.ToLower(cat.Packages[i].Name) < strings.ToLower(cat.Packages[j].Name)
 	})

@@ -70,14 +70,27 @@ func main() {
 	case "-U":
 		resetLog(cfg)
 		if isGingr(cfg) {
-			// gingrspacecadet/kpm tracks no versions, so there is nothing to upgrade.
-			fmt.Println("[KFPM] Update All is not supported by this KPM (it does not track package versions).")
-			appendLog(cfg, "update all: not supported by gingrspacecadet/kpm")
-			setStatus("packageInstallStatus", "failure")
-			os.Exit(1)
+			// gingrspacecadet/kpm tracks no versions, so only packages KFPM
+			// installed itself (from KindleModding-style repos) can be updated.
+			n, err := kpkgUpgradeAll(cfg, loadRepos(cfg, false), verbose)
+			if err != nil {
+				fmt.Printf("[KFPM] Update failed: %v (see %s)\n", err, cfg.path("last-log.txt"))
+				appendLog(cfg, "update all failed: "+err.Error())
+				refreshCatalog(cfg, false, verbose)
+				setStatus("packageInstallStatus", "failure")
+				os.Exit(1)
+			}
+			if n == 0 {
+				fmt.Println("[KFPM] Nothing to update.")
+			} else {
+				fmt.Printf("[KFPM] Updated %d packages.\n", n)
+			}
+			refreshCatalog(cfg, false, verbose)
+			setStatus("packageInstallStatus", "success")
+			return
 		}
 		if _, err := runKPM(cfg, verbose, "upgrade"); err != nil {
-			fmt.Printf("[KFPM] Upgrade failed: %v (see %s)\n", err, cfg.path("last.log"))
+			fmt.Printf("[KFPM] Upgrade failed: %v (see %s)\n", err, cfg.path("last-log.txt"))
 			refreshCatalog(cfg, false, verbose) // catalog first: the status event triggers a reload
 			setStatus("packageInstallStatus", "failure")
 			os.Exit(1)
@@ -186,7 +199,7 @@ kfpm -l              List installed packages
 kfpm -a              List the catalog (from cache, works offline)
 kfpm -abi            Report device ABI to the frontend
 
-Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last.log)`)
+Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last-log.txt)`)
 }
 
 // change runs one install/uninstall through kpm, publishes the result and
@@ -195,14 +208,25 @@ func change(c Config, action, id, statusProp string, verbose bool) error {
 	resetLog(c)
 	var err error
 	if isGingr(c) {
-		err = gingrPackageOp(c, action, id, verbose)
+		rf := loadRepos(c, false)
+		srcs, _ := kpkgSources(c, rf, false)
+		_, offered := srcs[id]
+		_, haveRec := loadKpkgInstalled(c)[id]
+		switch {
+		case action == "install" && offered:
+			err = kpkgInstall(c, rf, id, verbose)
+		case action == "uninstall" && haveRec:
+			err = kpkgUninstall(c, id, verbose)
+		default:
+			err = gingrPackageOp(c, action, id, verbose)
+		}
 	} else {
 		ensureRepos(c, loadRepos(c, false).Repos, verbose)
 		_, err = runKPM(c, verbose, action, id)
 	}
 	status := "success"
 	if err != nil {
-		fmt.Printf("[KFPM] %s of '%s' failed: %v (see %s)\n", action, id, err, c.path("last.log"))
+		fmt.Printf("[KFPM] %s of '%s' failed: %v (see %s)\n", action, id, err, c.path("last-log.txt"))
 		status = "failure"
 	} else {
 		fmt.Printf("[KFPM] %s of '%s' succeeded!\n", action, id)

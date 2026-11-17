@@ -46,13 +46,13 @@ func fakeKindle(t *testing.T) Config {
 		// old KindleForge
 		"KF-Update-Temp/leftover.zip", ".KFPM/installed.txt",
 		// dumps, reports
-		"Indexer_Dump_1762403439415.txt", "kfpm-diag.txt", "kfpm-net.txt",
+		"Indexer_Dump_1762403439415.txt", "kfpm-diag.txt", "kfpm-net.txt", "kindleforge-log.txt",
 		// untouchables
 		"Books/novel.azw3", "system/thumbnails/a.jpg", "koreader/settings.lua", "extensions/kpm/menu.json",
 		"mrpackages/update.bin", "screenshots/shot1.png", "adbreak.log",
 	)
 	data := filepath.Join(root, ".KFPM")
-	mk(t, data, "update/pkg.zip", "x.tmp", "cache/y.tmp", "repos.json")
+	mk(t, data, "update/pkg.zip", "x.tmp", "cache/y.tmp", "repos.json", "last-log.txt", "last.log")
 	return Config{UserRoot: root, DataDir: data}
 }
 
@@ -69,7 +69,7 @@ func TestScanFindsOnlyAllowlisted(t *testing.T) {
 	before := snapshot(t, c.UserRoot)
 	rep := buildCleanupReport(c, nil, true)
 	m := counts(rep)
-	want := map[string]int{"crash": 3, "oldforge": 2, "dumps": 1, "diag": 2, "kfupdate": 3, "orphansdr": 2}
+	want := map[string]int{"crash": 3, "oldforge": 2, "dumps": 1, "diag": 5, "kfupdate": 3, "orphansdr": 2}
 	for k, v := range want {
 		if m[k] != v {
 			t.Errorf("%s: got %d want %d (%v)", k, m[k], v, m)
@@ -109,7 +109,7 @@ var mustSurvive = []string{
 func TestApplyMovesSelectedOnlyAndSpares(t *testing.T) {
 	c := fakeKindle(t)
 	res := applyCleanup(c, []string{"crash", "oldforge", "dumps", "diag", "kfupdate"}) // orphansdr NOT chosen
-	if res.Count != 11 || res.Skipped != 0 || len(res.Errors) != 0 {
+	if res.Count != 14 || res.Skipped != 0 || len(res.Errors) != 0 {
 		t.Fatalf("result %+v", res)
 	}
 	for _, f := range mustSurvive {
@@ -127,7 +127,7 @@ func TestApplyMovesSelectedOnlyAndSpares(t *testing.T) {
 			t.Errorf("%s was not moved", f)
 		}
 	}
-	if len(loadTrash(c)) != 11 {
+	if len(loadTrash(c)) != 14 {
 		t.Errorf("trash entries = %d", len(loadTrash(c)))
 	}
 }

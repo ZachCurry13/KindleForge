@@ -49,7 +49,7 @@ echo "== KFPM -s (sync; needs Wi-Fi)"; "$KFPM" -s -v 2>&1
 echo "== KFPM -a"; "$KFPM" -a 2>&1
 echo "== KFPM -l"; "$KFPM" -l 2>&1
 echo "== data dir"; ls -l $DATA $DATA/cache 2>&1
-echo "== last.log"; tail -30 $DATA/last.log 2>&1
+echo "== last-log.txt"; tail -30 $DATA/last-log.txt 2>&1
 echo "== done"
 } > "$OUT" 2>&1
 

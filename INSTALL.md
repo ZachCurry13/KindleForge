@@ -37,9 +37,17 @@ Optional: copy `KindleForge/KFPM-Diag.sh` into `documents/` too. Running it writ
 
 ## Using it
 - **Install / Uninstall:** tap the button on a package card.
-- **Update a package:** cards with a newer version show **Update to X.Y.Z**. **Update All Packages** is in the system menu.
+- **Update a package:** cards with a newer version show **Update to X.Y.Z**. **Update All Packages** (system menu) updates every KindleForge-installed package that has a newer version.
 - **Refresh the list:** the **Refresh** button, or *Refresh Packages* in the system menu.
 - **When something fails:** tap **View log** (in the banner or under Details) to see what KPM printed.
+
+## Two package sources, one store
+- **gingrspacecadet/kpm packages** (the ones in the daily-synced list) are installed with your Kindle's `kpm -S` / `kpm -R`. That KPM tracks no versions, so these have no Update button.
+- **KindleTweaks repository packages** (KUALA, Gargoyle, KinAMP, LARK, RAnki, and any repo you add to `repos.json`) are installed **by KindleForge itself**: it downloads the package, unpacks it safely, runs its install script, and remembers the version, so **Update** and **Update All Packages** work for these. Uninstalling runs the package's own uninstall script; your data (RAnki's cards, LARK's listening history, KinAMP's settings) is left in place by those scripts.
+- **Trust:** the install and uninstall scripts come from the repository and run as root on the Kindle, exactly as with any KPM. The repository publishes no checksums, so KindleForge relies on https. I statically reviewed the five current packages' scripts: they only write under `/mnt/us`. Only add repositories you trust.
+
+## Logs
+KindleForge keeps a history in **`kindleforge-log.txt`** at the top level of the Kindle's storage (size-limited, newest kept), and the latest run in `.KFPM/last-log.txt`, which **View log** shows. Pull `kindleforge-log.txt` over USB when something goes wrong. **Clean Up Kindle** can move the logs and test reports to the trash.
 
 ## Updates: two separate things
 
@@ -85,7 +93,7 @@ It only ever considers its own fixed list of categories; it never takes a path f
 | `/mnt/us/.KFPM/cache/config.json` | last good copy of the GitHub catalog definition |
 | `/mnt/us/.KFPM/catalog.json` | catalog the UI reads (rewritten by KFPM) |
 | `/mnt/us/.KFPM/cache/` | last good copy of each manifest (offline use) |
-| `/mnt/us/.KFPM/last.log` | output of the most recent operation |
+| `/mnt/us/.KFPM/last-log.txt` | output of the most recent operation |
 | `/mnt/us/kmc/kpm/` or `/mnt/us/kpm/` | KPM's own database / installed list and packages (KindleModding / gingrspacecadet) |
 
 ## Adding a repository

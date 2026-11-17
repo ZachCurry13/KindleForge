@@ -820,11 +820,12 @@ function showLog() {
   o.appendChild(el("h2", "", "Output log"));
   var pre = el("pre", "", "Loading...");
   o.appendChild(pre);
+  o.appendChild(el("p", "small", "Full history: kindleforge-log.txt in the top folder of the Kindle's storage (over USB). Clean Up can remove it."));
   var back = el("button", "primary", "Back");
   back.setAttribute("data-action", "close");
   o.appendChild(back);
 
-  readFile("last.log", function(text) {
+  readFile("last-log.txt", function(text) {
     if (!text) { pre.textContent = "No log available."; return; }
     var lines = text.replace(/\s+$/, "").split("\n");
     if (lines.length > 22) lines = ["..."].concat(lines.slice(lines.length - 22));

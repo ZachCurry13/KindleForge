@@ -96,7 +96,7 @@ func TestGingrPackageOps(t *testing.T) {
 		if err := gingrPackageOp(c, "install", "kwordle", false); err != nil {
 			t.Fatalf("list says installed, should succeed: %v", err)
 		}
-		if !strings.Contains(read(t, c.path("last.log")), "treating as success") {
+		if !strings.Contains(read(t, c.path("last-log.txt")), "treating as success") {
 			t.Error("override not logged")
 		}
 	})

@@ -10,7 +10,7 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 ## How it fits together
 - Page -> backend: `kindle.messaging.sendStringMessage("com.kindlemodding.utild","runCMD","<KFPM> -i <id>")`
 - Backend -> page: `lipc-set-prop xyz.penguins184.kindleforge <prop> -s <value>` (`packageInstallStatus`, `packageUninstallStatus`, `catalogStatus`, `deviceABI`). catalog.json is written BEFORE the status is set.
-- Page reads `/mnt/us/.KFPM/catalog.json` and `last.log` through a hidden iframe (file:// XHR is unreliable).
+- Page reads `/mnt/us/.KFPM/catalog.json` and `last-log.txt` through a hidden iframe (file:// XHR is unreliable).
 
 ## KPM facts (verified from KindleModding/KPM source)
 - CLI: `kpm [-y] {add-repo|remove-repo|list-repo|update|search|install|uninstall|upgrade|launch}`; no list-installed command.
@@ -20,6 +20,10 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 ## Two KPMs (auto-detected, `detectBackend` in config.go; force with `KFPM_BACKEND=modding|gingr`)
 - `modding` = KindleModding/KPM (see above), preferred when both exist.
 - `gingr` = gingrspacecadet/kpm, `gingr.go`: `/usr/local/bin/kpm`, `kpm -S/-R/-Ql/-Qr`, installed ids in `/mnt/us/kpm/packages.list`, mirrors in `/etc/kpm/mirrors.conf` (first field = list URL, list = names only). Exit codes are unreliable (it can crash after a good install, and reads `kpm -Ql kpmgui` unchecked), so success is decided by re-reading packages.list and kpm gets an explicit PATH. No versions, so no Update/Update All. Display data comes from `packages`/`hidden`/`categories` in `catalog/config.json`.
+
+## KindleModding-style packages without KindleModding's KPM (`kpkg.go`)
+Manifest repos (`repos` in catalog config, e.g. KindleTweaks/Repo) work on the gingr backend too: `kpkgSources` reads the manifests, `kpkgInstall` downloads the .kpkg (gzip tar: manifest.json, install.sh, uninstall.sh, payload/), extracts safely (no `..`, links, devices; size/file caps; https only), validates manifest id/version/platform against the catalog, runs `sh install.sh` from the package folder with `KPM_PLATFORM` etc., and records the version in `.KFPM/kpkg/installed.json` (packages live in `.KFPM/kpkg/pkg/<id>`). A manifest package wins over a same-named gingr package. `change()` routes: manifest id -> kpkg, else gingr `kpm -S`. `-U` updates kpkg packages with newer versions. No checksums exist in manifests; dependencies are refused. Live check without running hooks: `KFPM_LIVE=1 go test -run Live`. Never run third-party hooks on the dev machine.
+Logs: `last-log.txt` (latest run, shown by the app) + `<root>/kindleforge-log.txt` (history, trimmed); both belong to the Clean Up `diag` category.
 
 ## Package info sync (`scripts/sync_packages.py`, `.github/workflows/sync-packages.yml`)
 Daily job: reads gingrspacecadet/kpm `packages.list`, derives name/author/description/category per package from the upstream project (GitHub repo named in the package's `install.kpm`, a same-named repo by the KPM author, or the KPM wiki page) and writes them into `catalog/config.json` `packages`. Fields it wrote are listed in the entry's `auto`; human-written fields are never overwritten. Infrastructure (`lib*`, kpm, musl, ...) is added to `hidden`. Tests: `python3 scripts/test_sync_packages.py`. Kindles read the result on Refresh.
