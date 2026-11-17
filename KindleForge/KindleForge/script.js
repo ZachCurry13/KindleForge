@@ -34,6 +34,7 @@ var busy = null;        // { kind: "install"|"update"|"uninstall"|"upgrade"|"syn
 var busyTimer = null;
 var lastFailure = null; // { text } shown with a "View log" button
 var notice = "";        // one-line result of the last operation
+var updateInfo = null;  // parsed update.json: { current, latest, available, notes, ... }
 
 function $(id) { return document.getElementById(id); }
 
@@ -61,7 +62,8 @@ function update() {
         "name": "default",
         "items": [
           { "id": "KFORGE_REFRESH", "state": "enabled", "handling": "notifyApp", "label": "Refresh Packages", "position": 0 },
-          { "id": "KFORGE_UPGRADE", "state": "enabled", "handling": "notifyApp", "label": "Update All Packages", "position": 1 }
+          { "id": "KFORGE_UPGRADE", "state": "enabled", "handling": "notifyApp", "label": "Update All Packages", "position": 1 },
+          { "id": "KFORGE_CHECKUPDATE", "state": "enabled", "handling": "notifyApp", "label": "Check for KindleForge Update", "position": 2 }
         ],
         "selectionMode": "none",
         "closeOnUse": true
@@ -105,6 +107,7 @@ window.kindle.appmgr.ongo = function() {
   window.kindle.messaging.receiveMessage("systemMenuItemSelected", function(eventType, id) {
     if (id === "KFORGE_REFRESH") startSync();
     else if (id === "KFORGE_UPGRADE") startUpgradeAll();
+    else if (id === "KFORGE_CHECKUPDATE") startCheck();
   });
 };
 
@@ -157,6 +160,20 @@ function loadCatalog(cb) {
   });
 }
 
+function loadUpdateInfo(cb) {
+  readFile("update.json", function(text) {
+    var parsed = null;
+    if (text) {
+      try {
+        parsed = JSON.parse(text);
+        if (!parsed || typeof parsed.current !== "string") parsed = null;
+      } catch (e) { parsed = null; }
+    }
+    if (parsed) updateInfo = parsed;
+    if (cb) cb(parsed);
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Sending commands to KFPM                                            */
 /* ------------------------------------------------------------------ */
@@ -181,7 +198,8 @@ function setBusy(op) {
 }
 
 var PAST = { install: "Installed", update: "Updated", uninstall: "Uninstalled", upgrade: "Updated all packages" };
-var ING = { install: "Installing", update: "Updating", uninstall: "Uninstalling", upgrade: "Updating all packages", sync: "Refreshing package list" };
+var ING = { install: "Installing", update: "Updating", uninstall: "Uninstalling", upgrade: "Updating all packages", sync: "Refreshing package list",
+            appupdate: "Updating KindleForge", check: "Checking for KindleForge updates" };
 var FLAG = { install: "-i", update: "-u", uninstall: "-r" };
 
 function startPackageOp(kind, pkg) {
@@ -203,6 +221,24 @@ function startUpgradeAll() {
   sendKFPM("-U");
 }
 
+function startAppUpdate() {
+  if (busy) { notice = "Another operation is in progress..."; renderBanner(); return; }
+  lastFailure = null;
+  notice = "";
+  setBusy({ kind: "appupdate", id: "", name: "" });
+  renderAll();
+  sendKFPM("-A");
+}
+
+function startCheck() {
+  if (busy) return;
+  lastFailure = null;
+  notice = "";
+  setBusy({ kind: "check", id: "", name: "" });
+  renderAll();
+  sendKFPM("-c");
+}
+
 function startSync() {
   if (busy) return;
   lastFailure = null;
@@ -217,7 +253,7 @@ function onOpResult(isUninstall) {
   return function(eventType, data) {
     if (!busy) return;
     var op = busy;
-    if (op.kind === "sync") return; // sync reports through catalogStatus
+    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check") return; // they report through their own properties
     var isUn = (op.kind === "uninstall");
     if (isUn !== isUninstall) return; // event for the other kind of operation
     var success = typeof data === "string" && data.indexOf("success") !== -1;
@@ -240,7 +276,39 @@ function onSyncResult(eventType, data) {
   setBusy(null);
   if (success) { notice = "Package list updated."; lastFailure = null; }
   else { notice = "Could not reach the repositories. Showing the saved list."; lastFailure = { text: notice }; }
-  loadCatalog(function() { renderAll(); });
+  loadCatalog(function() { loadUpdateInfo(function() { renderAll(); }); });
+}
+
+function onAppUpdateResult(eventType, data) {
+  if (!busy || busy.kind !== "appupdate") return;
+  var success = typeof data === "string" && data.indexOf("success") !== -1;
+  setBusy(null);
+  if (success) {
+    notice = "KindleForge updated. Restarting...";
+    lastFailure = null;
+    renderAll();
+    // The new files are already on disk; reloading picks them up.
+    setTimeout(function() { window.location.reload(); }, 1500);
+    return;
+  }
+  notice = "KindleForge update failed. Nothing was changed.";
+  lastFailure = { text: notice };
+  renderAll();
+}
+
+function onCheckResult(eventType, data) {
+  if (!busy || busy.kind !== "check") return;
+  var s = typeof data === "string" ? data : "";
+  setBusy(null);
+  if (s.indexOf("failure") !== -1) {
+    notice = "Could not check for updates. Check your Wi-Fi.";
+    lastFailure = { text: notice };
+    renderAll();
+    return;
+  }
+  notice = s.indexOf("available") !== -1 ? "A KindleForge update is available." : "KindleForge is up to date.";
+  lastFailure = null;
+  loadUpdateInfo(function() { renderAll(); });
 }
 
 /* ------------------------------------------------------------------ */
@@ -389,7 +457,24 @@ function renderList() {
   $("next").disabled = page >= pages - 1;
 }
 
+function renderUpdate() {
+  var box = $("update");
+  clear(box);
+  if (!updateInfo || !updateInfo.available || busy) { box.className = "hidden"; return; }
+  box.className = "";
+  box.appendChild(el("div", "", "KindleForge " + updateInfo.latest + " is available (you have " + updateInfo.current + ")."));
+  var row = el("div", "actions");
+  var go = el("button", "", "Update KindleForge");
+  go.setAttribute("data-action", "appupdate");
+  row.appendChild(go);
+  var more = el("button", "", "What's new");
+  more.setAttribute("data-action", "whatsnew");
+  row.appendChild(more);
+  box.appendChild(row);
+}
+
 function renderFooter() {
+  $("app-version").textContent = "KindleForge " + (updateInfo && updateInfo.current ? "v" + updateInfo.current : "");
   var s = "No Catalog";
   if (catalog) {
     var anyNet = false, anyCache = false;
@@ -398,12 +483,14 @@ function renderFooter() {
       if (catalog.repos[i].source === "cache") anyCache = true;
     }
     s = (anyCache && !anyNet ? "Offline list" : "List") + ": " + (catalog.generatedAt || "").substring(0, 10);
+    if (catalog.configSource) s += " (" + catalog.configSource + ")";
   }
   $("catalog-status").textContent = s;
 }
 
 function renderAll() {
   renderTabs();
+  renderUpdate();
   renderBanner();
   renderList();
   renderFooter();
@@ -472,6 +559,29 @@ function showDetails(p) {
   o.appendChild(row);
 }
 
+function showWhatsNew() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  var u = updateInfo || {};
+  o.appendChild(el("h2", "", "KindleForge " + (u.latest || "")));
+  var meta = el("div", "meta");
+  meta.appendChild(metaRow("Installed", u.current || "unknown"));
+  meta.appendChild(metaRow("Available", u.latest || "unknown"));
+  if (u.size) meta.appendChild(metaRow("Download", Math.round(u.size / 1024 / 102.4) / 10 + " MB"));
+  o.appendChild(meta);
+  o.appendChild(el("p", "body", shorten(u.notes, 700) || "No release notes."));
+  var row = el("div", "actions");
+  var go = el("button", "primary", "Update KindleForge");
+  go.setAttribute("data-action", "appupdate");
+  go.setAttribute("data-close", "1");
+  row.appendChild(go);
+  var back = el("button", "", "Back");
+  back.setAttribute("data-action", "close");
+  row.appendChild(back);
+  o.appendChild(row);
+}
+
 function showLog() {
   var o = $("overlay");
   clear(o);
@@ -526,6 +636,13 @@ function onTap(e) {
     case "details":
       if (p) showDetails(p);
       break;
+    case "appupdate":
+      if (attr(a.node, "data-close")) closeOverlay();
+      startAppUpdate();
+      break;
+    case "whatsnew":
+      showWhatsNew();
+      break;
     case "log":
       showLog();
       break;
@@ -564,11 +681,14 @@ document.addEventListener("DOMContentLoaded", function() {
   k.messaging.receiveMessage("packageInstallStatus", onOpResult(false));
   k.messaging.receiveMessage("packageUninstallStatus", onOpResult(true));
   k.messaging.receiveMessage("catalogStatus", onSyncResult);
+  k.messaging.receiveMessage("appUpdateStatus", onAppUpdateResult);
+  k.messaging.receiveMessage("updateCheckStatus", onCheckResult);
 
   sendKFPM("-abi");
 
   renderAll();
   // Show the saved catalog immediately (works offline); fetch one if none exists yet.
+  loadUpdateInfo(function() { renderAll(); }); // installed version + any pending update
   loadCatalog(function(parsed) {
     renderAll();
     if (!parsed) startSync();

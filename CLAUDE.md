@@ -17,10 +17,16 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 - DB `/mnt/us/kmc/kpm/kpm.db` (table `installed_packages`), packages in `/mnt/us/kmc/kpm/packages/`. KFPM reads the DB via the `sqlite3` binary.
 - Manifest v2: packages keyed by id; artifacts have `version:[a,b,c]`, `supported_platforms` (`kindlehf`/`kindlepw2`), `dependencies`.
 
+## Updates
+- Catalog definition: `catalog/config.json` in the GitHub repo (repos + categories). KFPM fetches it on Refresh (`-s`), caches it in `cache/config.json`, falls back to built-ins. User `repos.json` merges on top. Code: `config.go`.
+- App self-update (`selfupdate.go`): `-c` checks GitHub releases (pre-releases included), `-A` downloads the zip, requires GitHub's `sha256:` digest, extracts only `KindleForge/` (zip-slip/symlink/size checks), validates `VERSION == tag`, swaps `<app>` <-> `<app>.new` with rollback. Version comes from `KindleForge/KindleForge/VERSION`. Launcher is never updated in-app.
+- Releasing: bump VERSION, run `scripts/release.sh`, then `gh release create v<VERSION> dist/*.zip --prerelease`. The tag, VERSION and zip must agree or the updater refuses it.
+- Tests: `cd KFPM && go test ./...` (fake GitHub server end-to-end).
+
 ## Build / test
 - Build: see README. Always `CGO_ENABLED=0`.
 - Desktop test: env vars `KFPM_DATA_DIR`, `KFPM_KPM`, `KFPM_DB`, `KFPM_PKG_DIR`, `KFPM_PLATFORM`; frontend uses `./dev/` data when not on file://.
 - UI rules: black on white only, no transitions/animations, paginated (PAGE_SIZE=3), ES5, no scrolling lists.
 
 ## Not yet verified on hardware
-iframe file:// catalog read (incl. `?t=` cache-buster), real `kpm list-repo` output format, page size on-device, HTTPS CA certs for Go.
+self-update swap on a real device (only tested on desktop temp dirs), iframe file:// catalog read (incl. `?t=` cache-buster), real `kpm list-repo` output format, page size on-device, HTTPS CA certs for Go.

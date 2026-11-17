@@ -15,12 +15,20 @@ echo "== date"; date
 echo "== firmware"; cat /etc/version.txt 2>/dev/null; grep -i version /etc/prettyversion.txt 2>/dev/null
 echo "== ABI loader (hf if present)"; ls -l /lib/ld-linux-armhf.so.3 2>&1
 
-echo "== kpm location"
-for p in /var/local/kmc/bin/kpm /mnt/us/kmc/bin/kpm; do ls -l "$p" 2>&1; done
+echo "== which KPM? (KindleModding = /var/local/kmc/bin/kpm + kpm.db; gingrspacecadet = /usr/local/bin/kpm + /mnt/us/kpm/*.list)"
+for p in /var/local/kmc/bin/kpm /mnt/us/kmc/bin/kpm /usr/local/bin/kpm; do ls -l "$p" 2>&1; done
 command -v kpm 2>&1
-KPM=/var/local/kmc/bin/kpm; [ -x "$KPM" ] || KPM=$(command -v kpm)
-echo "== kpm version"; "$KPM" version 2>&1
-echo "== kpm list-repo"; "$KPM" list-repo 2>&1
+echo "-- /mnt/us/kpm"; ls -la /mnt/us/kpm 2>&1; ls -la /mnt/us/kpm/packages 2>&1
+echo "-- /mnt/us/kmc"; ls -la /mnt/us/kmc /mnt/us/kmc/kpm 2>&1
+echo "-- /etc/kpm"; cat /etc/kpm/kpm.conf /etc/kpm/mirrors.conf 2>&1
+echo "-- installed (gingrspacecadet style)"; cat /mnt/us/kpm/packages.list 2>&1
+echo "-- first lines of remote list"; head -5 /mnt/us/kpm/remote_packages.list 2>&1
+
+echo "== KindleModding KPM (if present)"
+KPM=/var/local/kmc/bin/kpm; [ -x "$KPM" ] || KPM=/mnt/us/kmc/bin/kpm
+if [ -x "$KPM" ]; then "$KPM" version 2>&1; "$KPM" list-repo 2>&1; else echo "not found"; fi
+echo "== gingrspacecadet KPM (if present)"
+if [ -x /usr/local/bin/kpm ]; then /usr/local/bin/kpm --version 2>&1; /usr/local/bin/kpm -Ql 2>&1; else echo "not found"; fi
 
 echo "== sqlite3 + kpm db"
 command -v sqlite3 2>&1

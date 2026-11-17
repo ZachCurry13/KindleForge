@@ -54,6 +54,13 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] **Refresh** offline: banner "Could not reach the repositories. Showing the saved list." and the list stays.
 - [ ] **Custom repo**: add a second manifest URL to `/mnt/us/.KFPM/repos.json` (and entries under `categories`), Refresh, confirm its packages show up and `kpm list-repo` now lists it.
 
+## 5b. Updates (needs two published releases; install an older one first)
+- [ ] After Refresh, if a newer release exists, the black **"KindleForge X is available"** banner shows. **What's new** shows the notes.
+- [ ] System menu > **Check for KindleForge Update** reports "up to date" or "available".
+- [ ] **Update KindleForge**: banner "Updating KindleForge...", then "Updated... Restarting", the app reloads and the footer shows the new `vX`. **Swap/reload on a real device is [unverified]**; if it hangs, check `/mnt/us/.KFPM/last.log` and that `/var/local/mesquite/KindleForge` still has `index.html` (a `.old` folder next to it means a swap was interrupted).
+- [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
+- [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
+
 ## 6. Reinstall behaviour
 - [ ] Re-run `KindleForge.sh` (or use a new release copy): `/mnt/us/.KFPM/` (repos, cache, catalog) survives and installed packages are unaffected.
 

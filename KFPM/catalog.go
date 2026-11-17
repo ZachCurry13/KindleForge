@@ -90,11 +90,12 @@ type RepoStatus struct {
 }
 
 type Catalog struct {
-	GeneratedAt string       `json:"generatedAt"`
-	Platform    string       `json:"platform"`
-	ABI         string       `json:"abi"`
-	Repos       []RepoStatus `json:"repos"`
-	Packages    []CatPackage `json:"packages"`
+	GeneratedAt  string       `json:"generatedAt"`
+	ConfigSource string       `json:"configSource"` // github | cache | built-in
+	Platform     string       `json:"platform"`
+	ABI          string       `json:"abi"`
+	Repos        []RepoStatus `json:"repos"`
+	Packages     []CatPackage `json:"packages"`
 }
 
 // ---- fetching with cache --------------------------------------------------
@@ -157,11 +158,12 @@ func loadManifest(c Config, r Repo, online bool) (Manifest, string) {
 
 func buildCatalog(c Config, rf ReposFile, online bool) Catalog {
 	cat := Catalog{
-		GeneratedAt: time.Now().UTC().Format(time.RFC3339),
-		Platform:    c.Platform,
-		ABI:         detectABI(),
-		Packages:    []CatPackage{},
-		Repos:       []RepoStatus{},
+		GeneratedAt:  time.Now().UTC().Format(time.RFC3339),
+		Platform:     c.Platform,
+		ConfigSource: rf.Source,
+		ABI:          detectABI(),
+		Packages:     []CatPackage{},
+		Repos:        []RepoStatus{},
 	}
 	installed := listInstalled(c)
 	seen := map[string]bool{} // first repo listed wins on duplicate ids

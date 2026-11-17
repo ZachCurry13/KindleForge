@@ -21,7 +21,8 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 - Installs through the native KPM package manager
 - Search, category tabs and Install / Update / Uninstall buttons
 - Paginated, high-contrast e-ink UI (no scrolling, no animation)
-- Multiple repositories via `repos.json`, with an offline cache
+- Multiple repositories, with an offline cache. The catalog definition updates from GitHub without a new app release
+- In-app self-update from GitHub releases, with checksum verification and rollback
 - Hard-float and soft-float support
 
 <img width="380" alt="Store list" src="docs/screenshots/store-list.jpg" /> <img width="380" alt="Details view" src="docs/screenshots/details.jpg" />
@@ -79,7 +80,9 @@ A: Could be caused by a multitude of issues such as beginning the install withou
 
 KFPM keeps its data in `/mnt/us/.KFPM/`:
 
-- `repos.json` - list of KPM manifest URLs (seeded with KindleTweaks) plus an optional package-id to category map for the store tabs
+- `repos.json` - your own extra repos / category overrides / `disable` list (merged over the GitHub catalog definition, never overwritten)
+- `update.json` - installed version and any pending KindleForge update
+- `cache/config.json` - last good copy of the GitHub catalog definition (`catalog/config.json` in this repo)
 - `catalog.json` - merged catalog the UI reads (rewritten by KFPM)
 - `cache/` - last good copy of each manifest, used when offline
 - `last.log` - output of the most recent operation

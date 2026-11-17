@@ -81,16 +81,32 @@ func main() {
 		resetLog(cfg)
 		os.Exit(exitCode(refreshCatalog(cfg, true, verbose)))
 
+	case "-c":
+		resetLog(cfg)
+		os.Exit(exitCode(checkForUpdate(cfg)))
+
+	case "-A":
+		resetLog(cfg)
+		if err := applyUpdate(cfg); err != nil {
+			fmt.Printf("[KFPM] App update failed: %v\n", err)
+			appendLog(cfg, "update failed: "+err.Error())
+			setStatus("appUpdateStatus", "failure")
+			os.Exit(1)
+		}
+		fmt.Printf("[KFPM] KindleForge updated to %s\n", readAppVersion(cfg))
+		setStatus("appUpdateStatus", "success")
+
 	case "-l":
 		listInstalledCmd(cfg)
 
 	case "-a":
 		// Offline-safe: uses the cached manifests, never touches the network.
-		printCatalog(buildCatalog(cfg, loadRepos(cfg), false))
+		printCatalog(buildCatalog(cfg, loadRepos(cfg, false), false))
 
 	case "-abi":
 		abi := detectABI()
-		fmt.Printf("[KFPM] ABI: %s (platform: %s)\n", abi, cfg.Platform)
+		writeLocalVersion(cfg)
+		fmt.Printf("[KFPM] ABI: %s (platform: %s), app %s\n", abi, cfg.Platform, readAppVersion(cfg))
 		setStatus("deviceABI", abi)
 
 	default:
@@ -113,7 +129,9 @@ kfpm -i <ID> [-v]    Install a package (and its dependencies)
 kfpm -u <ID> [-v]    Update a package to the newest version
 kfpm -r <ID> [-v]    Uninstall a package
 kfpm -U [-v]         Upgrade every installed package
-kfpm -s [-v]         Sync: refresh repo manifests and rewrite catalog.json
+kfpm -s [-v]         Sync: refresh catalog definition + repo manifests, check for app update
+kfpm -c              Check GitHub for a newer KindleForge release
+kfpm -A              Download, verify and install the newer KindleForge release
 kfpm -l              List installed packages
 kfpm -a              List the catalog (from cache, works offline)
 kfpm -abi            Report device ABI to the frontend
@@ -125,7 +143,7 @@ Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last.log)`)
 // regenerates catalog.json so the frontend sees the new state.
 func change(c Config, action, id, statusProp string, verbose bool) error {
 	resetLog(c)
-	ensureRepos(c, loadRepos(c).Repos, verbose)
+	ensureRepos(c, loadRepos(c, false).Repos, verbose)
 
 	_, err := runKPM(c, verbose, action, id)
 	status := "success"
@@ -144,7 +162,7 @@ func change(c Config, action, id, statusProp string, verbose bool) error {
 // refreshCatalog rewrites catalog.json. With sync it first updates KPM's index
 // and re-downloads the manifests; otherwise it only re-reads local state.
 func refreshCatalog(c Config, sync, verbose bool) error {
-	rf := loadRepos(c)
+	rf := loadRepos(c, sync)
 	if sync {
 		ensureRepos(c, rf.Repos, verbose)
 		if _, err := runKPM(c, verbose, "update"); err != nil {
@@ -167,6 +185,12 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 		return err
 	}
 	if sync {
+		// Also look for a newer KindleForge release; failure here is not fatal.
+		if info, err := checkUpdate(c); err != nil {
+			logf("update check failed: %v", err)
+		} else if info.Available {
+			fmt.Printf("[KFPM] KindleForge %s is available (installed: %s)\n", info.Latest, info.Current)
+		}
 		if !reachable {
 			setStatus("catalogStatus", "failure")
 			return fmt.Errorf("no repository reachable and no cache available")
@@ -198,4 +222,24 @@ func setStatus(prop, status string) {
 		return // not on a Kindle
 	}
 	_ = exec.Command("lipc-set-prop", lipcService, prop, "-s", status).Run()
+}
+
+// checkForUpdate asks GitHub whether a newer KindleForge release exists and
+// reports through the updateCheckStatus property.
+func checkForUpdate(c Config) error {
+	info, err := checkUpdate(c)
+	if err != nil {
+		fmt.Printf("[KFPM] Update check failed: %v\n", err)
+		appendLog(c, "update check failed: "+err.Error())
+		setStatus("updateCheckStatus", "failure")
+		return err
+	}
+	if info.Available {
+		fmt.Printf("[KFPM] KindleForge %s is available (installed: %s)\n", info.Latest, info.Current)
+		setStatus("updateCheckStatus", "available")
+	} else {
+		fmt.Printf("[KFPM] KindleForge is up to date (%s)\n", info.Current)
+		setStatus("updateCheckStatus", "current")
+	}
+	return nil
 }

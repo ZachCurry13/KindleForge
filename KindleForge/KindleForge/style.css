@@ -98,7 +98,7 @@ button[disabled] {
 #tabs button {
     flex: 1;
     min-width: 0;
-    min-height: 52px;
+    min-height: 48px;
     margin-right: 6px;
     padding: 6px 2px;
     font-size: 16px;
@@ -121,6 +121,31 @@ button[disabled] {
     display: block;
     width: 100%;
     margin-top: 8px;
+}
+
+/* ---- app update strip ---- */
+
+#update {
+    border: 3px solid #000000;
+    background: #000000;
+    color: #ffffff;
+    padding: 6px 12px 8px 12px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 17px;
+}
+
+#update .actions {
+    margin-top: 4px;
+}
+
+#update button {
+    min-height: 44px;
+    padding: 4px 12px;
+    font-size: 18px;
+    background: #ffffff;
+    color: #000000;
+    border-color: #ffffff;
 }
 
 /* ---- package cards ---- */
@@ -267,7 +292,8 @@ button[disabled] {
 
 footer {
     border-top: 2px solid #000000;
-    padding-top: 8px;
+    padding-top: 6px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.3;
 }

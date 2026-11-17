@@ -39,11 +39,18 @@ Optional: copy `KindleForge/KFPM-Diag.sh` into `documents/` too. Running it writ
 - **Refresh the list:** the **Refresh** button, or *Refresh Packages* in the system menu.
 - **When something fails:** tap **View log** (in the banner or under Details) to see what KPM printed.
 
-## Update KindleForge itself
-There is no in-app updater (the old one used the retired server).
-1. Get the new files as above.
-2. Copy the new `KindleForge/` folder and `KindleForge.sh` into `documents/`, replacing the old ones.
-3. Run **KindleForge** from the Library once so it re-copies itself.
+## Updates: two separate things
+
+### 1. The package catalog (updates without a new app version)
+The list of repositories and the category tabs come from `catalog/config.json` in this GitHub repo. **Refresh** (button or system menu) downloads it, so catalog changes reach every Kindle without a new release. The last good copy is cached, so it still works offline, and built-in defaults are used if there is no cache. The footer shows where the list came from: `(github)`, `(cache)` or `(built-in)`. Your own `repos.json` is merged on top and is never overwritten.
+
+### 2. KindleForge itself (in-app, from GitHub releases)
+- **Refresh** also checks GitHub for a newer release. You can check on demand from the system menu: **Check for KindleForge Update**.
+- When one exists, a black banner appears at the top: **KindleForge X is available**. **What's new** shows the release notes; **Update KindleForge** installs it.
+- The update downloads the release zip, **verifies its SHA-256 checksum against the one GitHub publishes for that file**, checks the package is complete and matches the release version, then swaps the app folder (keeping the old one until the swap succeeds, and restoring it if it fails). The app then reloads itself.
+- It only replaces the app folder. **`KindleForge.sh` (the launcher) is not updated automatically.** If a release note says the launcher changed, copy the new `KindleForge.sh` over USB.
+- Releases from before v5.0.0-alpha.2 have no updater: install alpha.2 or later by hand once, and it can update itself from there.
+- Manual route (always works): copy the new `KindleForge/` folder and `KindleForge.sh` into `documents/` and run it once.
 
 Your repo list, cached catalog and installed packages are kept: they live in `/mnt/us/.KFPM/` and KPM's own folders, not in the app.
 
@@ -55,17 +62,21 @@ Your repo list, cached catalog and installed packages are kept: they live in `/m
 ## Where things live
 | Path | What |
 |---|---|
-| `/mnt/us/.KFPM/repos.json` | repo manifest URLs and the id-to-category map |
+| `/mnt/us/.KFPM/repos.json` | **your own** extra repos, category overrides and `disable` list (never overwritten) |
+| `/mnt/us/.KFPM/update.json` | installed version and any pending KindleForge update |
+| `/mnt/us/.KFPM/cache/config.json` | last good copy of the GitHub catalog definition |
 | `/mnt/us/.KFPM/catalog.json` | catalog the UI reads (rewritten by KFPM) |
 | `/mnt/us/.KFPM/cache/` | last good copy of each manifest (offline use) |
 | `/mnt/us/.KFPM/last.log` | output of the most recent operation |
 | `/mnt/us/kmc/kpm/` | KPM's own database and installed packages |
 
 ## Adding a repository
-Edit `/mnt/us/.KFPM/repos.json` and add another entry under `repos`:
+Edit `/mnt/us/.KFPM/repos.json` (your personal file, merged with the GitHub catalog definition) and add another entry under `repos`:
 
 ```json
 { "id": "myrepo", "url": "https://example.github.io/Repo/manifest.json" }
 ```
 
-Optionally add package ids to `categories` (`readers`, `games`, `media`, `utilities`) so they appear under those tabs. Then tap **Refresh**.
+Optionally add package ids to `categories` (`readers`, `games`, `media`, `utilities`) so they appear under those tabs, or list a catalog repo id under `"disable": [...]` to hide it. Then tap **Refresh**.
+
+To change the catalog for *everyone*, edit `catalog/config.json` in the GitHub repo instead.
