@@ -2,362 +2,200 @@
    KFPM
    KindleForge Package Manager
 
-   Simple Package Installing Solution For KindleForge
+   Thin wrapper around the native KPM (Kindle Package Manager) CLI. KFPM owns
+   the storefront catalog (repo manifests + offline cache) and reports results
+   to the frontend through lipc properties; KPM does the real package work.
 */
 
 package main
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "io"
-    "net/http"
-    "os"
-    "os/exec"
-    "slices"
-    "strings"
-    "time"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 )
 
-const (
-    registryURL   = "https://kf.penguins184.xyz/registry.json"
-    registryBase  = "https://kf.penguins184.xyz/"
-    installedFile = "/mnt/us/.KFPM/installed.txt"
-)
-
-var (
-    registry = fetchRegistry()
-    installed = getInstalled()
-    ABI = fetchABI()
-)
-
-type Package struct {
-    Name          string   `json:"name"`
-    Uri           string   `json:"uri"`
-    Dependencies  []string `json:"dependencies"`
-    Description   string   `json:"description"`
-    Author        string   `json:"author"`
-    ABI           []string `json:"ABI"`
+func logf(format string, a ...any) {
+	fmt.Fprintf(os.Stderr, "[KFPM] "+format+"\n", a...)
 }
 
 func main() {
-    ensureInstalledDir()
+	args := os.Args[1:]
+	if len(args) == 0 {
+		help()
+		return
+	}
 
-    args := os.Args[1:]
+	cfg := loadConfig()
+	_ = os.MkdirAll(cfg.DataDir, 0o755)
 
-    if len(args) == 0 {
-        help()
-        return
-    }
+	verbose := false
+	for _, a := range args[1:] {
+		if a == "-v" {
+			verbose = true
+		}
+	}
+	// Package id is the first non-flag argument after the command.
+	pkgArg := func() (string, bool) {
+		if len(args) < 2 || strings.HasPrefix(args[1], "-") {
+			fmt.Printf("[KFPM] %s requires a package id\n", args[0])
+			return "", false
+		}
+		if !validID.MatchString(args[1]) {
+			fmt.Printf("[KFPM] invalid package id %q\n", args[1])
+			return "", false
+		}
+		return args[1], true
+	}
 
-    verbose := len(args) > 2 && args[2] == "-v"
+	switch args[0] {
+	case "-i", "-u":
+		id, ok := pkgArg()
+		if !ok {
+			return
+		}
+		// `kpm install` (re)installs/upgrades, so install and update share a path.
+		os.Exit(exitCode(change(cfg, "install", id, "packageInstallStatus", verbose)))
 
-    switch args[0] {
-    case "-i":
-        if len(args) < 2 {
-            fmt.Println("Oops! -i Requires A Package Name!")
-            return
-        }
-        pkgId := args[1]
-        err := install(pkgId, verbose, []string{})
-        if err != nil {
-            fmt.Printf("[KFPM] %s\n", err.Error())
-        }
+	case "-r":
+		id, ok := pkgArg()
+		if !ok {
+			return
+		}
+		os.Exit(exitCode(change(cfg, "uninstall", id, "packageUninstallStatus", verbose)))
 
-    case "-r", "-u":
-        if len(args) < 2 {
-            fmt.Println("Error: -r/-u Requires A Package Name!")
-            return
-        }
-        pkg := args[1]
+	case "-U":
+		resetLog(cfg)
+		if _, err := runKPM(cfg, verbose, "upgrade"); err != nil {
+			fmt.Printf("[KFPM] Upgrade failed: %v (see %s)\n", err, cfg.path("last.log"))
+			refreshCatalog(cfg, false, verbose) // catalog first: the status event triggers a reload
+			setStatus("packageInstallStatus", "failure")
+			os.Exit(1)
+		}
+		fmt.Println("[KFPM] Upgrade complete!")
+		refreshCatalog(cfg, false, verbose)
+		setStatus("packageInstallStatus", "success")
 
-        if !isInstalled(pkg) {
-            fmt.Println("[KFPM] Package ID Not Installed.")
-            return
-        }
+	case "-s":
+		resetLog(cfg)
+		os.Exit(exitCode(refreshCatalog(cfg, true, verbose)))
 
-        if runScript(pkg, "uninstall", verbose) {
-            fmt.Println("[KFPM] Removal Success!")
-            removeInstalled(pkg)
-            setStatus("packageUninstallStatus", "success")
-        } else {
-            fmt.Println("[KFPM] Removal Failure!")
-            setStatus("packageUninstallStatus", "failure")
-        }
+	case "-l":
+		listInstalledCmd(cfg)
 
-    case "-l":
-        listInstalled()
+	case "-a":
+		// Offline-safe: uses the cached manifests, never touches the network.
+		printCatalog(buildCatalog(cfg, loadRepos(cfg), false))
 
-    case "-a":
-        listAvailable()
+	case "-abi":
+		abi := detectABI()
+		fmt.Printf("[KFPM] ABI: %s (platform: %s)\n", abi, cfg.Platform)
+		setStatus("deviceABI", abi)
 
-    case "-abi":
-        fmt.Printf("[KFPM] ABI: %s\n", ABI)
-        setStatus("deviceABI", ABI)
+	default:
+		fmt.Println("Unknown Option:", args[0])
+		help()
+	}
+}
 
-    default:
-        fmt.Println("Unknown Option:", args[0])
-        help()
-    }
+func exitCode(err error) int {
+	if err != nil {
+		return 1
+	}
+	return 0
 }
 
 func help() {
-    fmt.Println(`KindleForge Package Manager
-====================
-v1.1b, made by Penguins184, ThatPotatoDev
+	fmt.Println(`KindleForge Package Manager (KPM backend)
+=========================================
+kfpm -i <ID> [-v]    Install a package (and its dependencies)
+kfpm -u <ID> [-v]    Update a package to the newest version
+kfpm -r <ID> [-v]    Uninstall a package
+kfpm -U [-v]         Upgrade every installed package
+kfpm -s [-v]         Sync: refresh repo manifests and rewrite catalog.json
+kfpm -l              List installed packages
+kfpm -a              List the catalog (from cache, works offline)
+kfpm -abi            Report device ABI to the frontend
 
-kfpm -i <ID> [-v]    Installs Package
-kfpm -r/-u <ID> [-v] Removes/Uninstalls Package
-kfpm -l              Lists Installed Packages
-kfpm -a              Lists All Available Packages`)
+Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last.log)`)
 }
 
-// Ensure Data Directory Exists
-func ensureInstalledDir() {
-    os.MkdirAll("/mnt/us/.KFPM", 0755)
+// change runs one install/uninstall through kpm, publishes the result and
+// regenerates catalog.json so the frontend sees the new state.
+func change(c Config, action, id, statusProp string, verbose bool) error {
+	resetLog(c)
+	ensureRepos(c, loadRepos(c).Repos, verbose)
+
+	_, err := runKPM(c, verbose, action, id)
+	status := "success"
+	if err != nil {
+		fmt.Printf("[KFPM] %s of '%s' failed: %v (see %s)\n", action, id, err, c.path("last.log"))
+		status = "failure"
+	} else {
+		fmt.Printf("[KFPM] %s of '%s' succeeded!\n", action, id)
+	}
+	// Rewrite catalog.json BEFORE signalling: the frontend reloads it on the event.
+	refreshCatalog(c, false, verbose)
+	setStatus(statusProp, status)
+	return err
 }
 
-func install(pkgId string, verbose bool, loopedDeps []string) error {
+// refreshCatalog rewrites catalog.json. With sync it first updates KPM's index
+// and re-downloads the manifests; otherwise it only re-reads local state.
+func refreshCatalog(c Config, sync, verbose bool) error {
+	rf := loadRepos(c)
+	if sync {
+		ensureRepos(c, rf.Repos, verbose)
+		if _, err := runKPM(c, verbose, "update"); err != nil {
+			logf("kpm update failed: %v", err)
+		}
+	}
+	cat := buildCatalog(c, rf, sync)
 
-    if isInstalled(pkgId) {
-        fmt.Printf("[KFPM] Package '%s' Is Already Installed, Skipping\n", pkgId)
-        return nil
-    }
-
-    if slices.Contains(loopedDeps, pkgId) {
-        return errors.New("Dependency Loop Detected, Aborting")
-    }
-
-    loopedDeps = append(loopedDeps, pkgId)
-
-    pkg, err := getPackage(pkgId)
-
-    if err != nil {
-        return fmt.Errorf("Invalid Package ID '%s'!", pkgId)
-    }
-
-    if len(pkg.ABI) == 0 {
-        pkg.ABI = []string{"sf", "hf"}
-    }
-
-    if !slices.Contains(pkg.ABI, ABI) {
-        return fmt.Errorf("Package '%s' Does Not Support Device ABI!", pkgId)
-    }
-
-    for _, depId := range pkg.Dependencies {
-        if err := install(depId, verbose, loopedDeps); err != nil {
-            return err
-        }
-    }
-
-    if runScript(pkgId, "install", verbose) {
-        fmt.Printf("[KFPM] Successfully Installed '%s'!\n", pkgId)
-        appendInstalled(pkgId)
-        setStatus("packageInstallStatus", "success")
-        return nil
-    } else {
-        setStatus("packageInstallStatus", "failure")
-        return errors.New("Failed to install!")
-    }
+	reachable := false
+	for _, r := range cat.Repos {
+		if r.Source != "unavailable" {
+			reachable = true
+		}
+	}
+	if err := writeCatalog(c, cat); err != nil {
+		logf("could not write catalog: %v", err)
+		if sync {
+			setStatus("catalogStatus", "failure")
+		}
+		return err
+	}
+	if sync {
+		if !reachable {
+			setStatus("catalogStatus", "failure")
+			return fmt.Errorf("no repository reachable and no cache available")
+		}
+		setStatus("catalogStatus", "success")
+		fmt.Printf("[KFPM] Catalog updated: %d packages\n", len(cat.Packages))
+	}
+	return nil
 }
 
-// Install/Uninstall Runners
-func runScript(pkg string, action string, verbose bool) bool {
-    url := fmt.Sprintf("%s%s/%s.sh", registryBase, pkg, action)
-
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-    defer cancel()
-
-    cmd := exec.CommandContext(
-        ctx,
-        "/bin/sh", "-c",
-        "curl -fSL --progress-bar "+url+" | sh",
-    )
-
-    if verbose {
-        cmd.Stdout = os.Stdout
-        cmd.Stderr = os.Stderr
-    }
-
-    err := cmd.Run()
-
-    if ctx.Err() == context.DeadlineExceeded {
-        timeout(pkg, action)
-        return false
-    }
-
-    return err == nil
+func listInstalledCmd(c Config) {
+	inst := listInstalled(c)
+	if len(inst) == 0 {
+		fmt.Println("[KFPM] No Installed Packages Found!")
+		return
+	}
+	fmt.Println("Installed Packages:")
+	i := 0
+	for _, p := range sortedInstalled(inst) {
+		i++
+		fmt.Printf("%d. %s %s\n", i, p.ID, p.Version)
+	}
 }
 
-func timeout(pkg string, action string) {
-    var actionLabel string
-    if action == "install" {
-        actionLabel = "Install"
-    } else {
-        actionLabel = "Uninstall"
-    }
-
-    title := fmt.Sprintf("%s Failure!", actionLabel)
-    text := fmt.Sprintf(
-        "KindleForge Could Not %s %s! The Installation Timed Out. Please Refresh Packages & Retry.",
-        strings.Title(action),
-        pkg,
-    )
-
-    exec.Command(
-        "/bin/sh", "-c",
-        fmt.Sprintf(`
-rm -rf /mnt/us/KFPM-Temporary
-
-alert() {
-    TITLE="$1"
-    TEXT="$2"
-
-    TITLE_ESC=$(printf '%s' "$TITLE" | sed 's/"/\\"/g')
-    TEXT_ESC=$(printf '%s' "$TEXT" | sed 's/"/\\"/g')
-
-    JSON='{ "clientParams":{ "alertId":"appAlert1", "show":true, "customStrings":[ { "matchStr":"alertTitle", "replaceStr":"'"$TITLE_ESC"'" }, { "matchStr":"alertText", "replaceStr":"'"$TEXT_ESC"'" } ] } }'
-
-    lipc-set-prop com.lab126.pillow pillowAlert "$JSON"
-}
-alert "%s" "%s"
-`, title, text),
-    ).Run()
-}
-
-// Append Package To List
-func appendInstalled(pkg string) {
-    data, _ := os.ReadFile(installedFile)
-    text := strings.TrimSpace(string(data))
-
-    lines := strings.Split(text, "\n")
-    for _, line := range lines {
-        if strings.TrimSpace(line) == pkg {
-            return
-        }
-    }
-
-    f, err := os.OpenFile(installedFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-    if err != nil {
-        return
-    }
-    defer f.Close()
-
-    // Ensure Newline
-    if len(text) > 0 && !strings.HasSuffix(text, "\n") {
-        f.WriteString("\n")
-    }
-
-    f.WriteString(strings.TrimSpace(pkg) + "\n")
-    installed = getInstalled()
-}
-
-// Remove Package From List
-func removeInstalled(pkg string) {
-    data, err := os.ReadFile(installedFile)
-    if err != nil {
-        return
-    }
-
-    lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-    var out []string
-    for _, line := range lines {
-        trimmed := strings.TrimSpace(line)
-        if trimmed != "" && trimmed != pkg {
-            out = append(out, trimmed)
-        }
-    }
-
-    os.WriteFile(installedFile, []byte(strings.Join(out, "\n")+"\n"), 0644)
-}
-
-// List Installed Packages
-func listInstalled() {
-    data, err := os.ReadFile(installedFile)
-    if err != nil || len(strings.TrimSpace(string(data))) == 0 {
-        fmt.Println("[KFPM] No Installed Packages Found!")
-        return
-    }
-
-    lines := strings.Split(strings.TrimSpace(string(data)), "\n")
-    fmt.Println("Installed Packages:")
-    for i, line := range lines {
-        trimmed := strings.TrimSpace(line)
-        if trimmed != "" {
-            fmt.Printf("%d. %s\n", i+1, trimmed)
-        }
-    }
-}
-
-// List Available Packages From Remote
-func listAvailable() {
-    pkgs := registry
-    if pkgs == nil {
-        return
-    }
-
-    fmt.Println("Available Packages:")
-    for i, p := range pkgs {
-        fmt.Printf("%d. %s\n", i+1, p.Name)
-        fmt.Printf("    - Description: %s\n", p.Description)
-        fmt.Printf("    - Author: %s\n", p.Author)
-        fmt.Printf("    - ID: %s\n", p.Uri)
-        fmt.Printf("    - Dependencies: %s\n", p.Dependencies)
-        fmt.Printf("    - ABI: %s\n\n", p.ABI)
-    }
-}
-
-// Helpers
-func fetchRegistry() []Package {
-    resp, err := http.Get(registryURL)
-    if err != nil {
-        fmt.Println("[KFPM] Failed To Fetch Registry:", err)
-        return nil
-    }
-    defer resp.Body.Close()
-
-    body, _ := io.ReadAll(resp.Body)
-    var pkgs []Package
-    if err := json.Unmarshal(body, &pkgs); err != nil {
-        fmt.Println("[KFPM] Invalid Registry Format:", err)
-        return nil
-    }
-    return pkgs
-}
-
-func getPackage(id string) (Package, error) {
-    for _, p := range registry {
-        if p.Uri == id {
-            return p, nil
-        }
-    }
-    return Package{}, errors.New("Package Not Found!")
-}
-
-func isInstalled(id string) bool {
-    return slices.Contains(installed, id)
-}
-
-func getInstalled() []string {
-    data, err := os.ReadFile(installedFile)
-    if err != nil {
-        return nil
-    }
-    return strings.Split(strings.TrimSpace(string(data)), "\n")
-}
-
-func setStatus(prop string, status string) {
-    exec.Command(
-        "/bin/sh", "-c",
-        fmt.Sprintf(`lipc-set-prop xyz.penguins184.kindleforge %s -s "%s"`, prop, status),
-    ).Run()
-}
-
-func fetchABI() string {
-    if _, err := os.Stat("/lib/ld-linux-armhf.so.3"); !os.IsNotExist(err) {
-        return "hf"
-    }
-    return "sf"
+// setStatus publishes a value to the frontend through lipc. No shell is
+// involved, so values are never interpreted.
+func setStatus(prop, status string) {
+	if _, err := exec.LookPath("lipc-set-prop"); err != nil {
+		return // not on a Kindle
+	}
+	_ = exec.Command("lipc-set-prop", lipcService, prop, "-s", status).Run()
 }
