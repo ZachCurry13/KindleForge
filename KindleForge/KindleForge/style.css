@@ -1,3 +1,9 @@
+/*
+   KindleForge e-ink stylesheet
+   Pure black on pure white, no transitions/animations/gradients (they ghost
+   on e-ink), large tap targets, no scrolling lists (paginated instead).
+*/
+
 @font-face {
     font-family: "Libre Baskerville";
     src: url(assets/libre-baskerville.ttf) format("truetype");
@@ -14,146 +20,254 @@
     box-sizing: border-box;
 }
 
+html, body {
+    background: #ffffff;
+    color: #000000;
+}
+
 body {
     font-family: "Inter", system-ui, sans-serif;
-    color: #111827;
-    background-color: white;
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.4;
+    font-size: 18px;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .container {
     min-height: 100vh;
+    display: block;
+    width: 100%;
+    padding: 12px;
+}
+
+/* ---- top bar: search + refresh ---- */
+
+#topbar {
     display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+    align-items: stretch;
+    margin-bottom: 10px;
 }
 
-header {
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1.5rem 1rem 2rem 1rem;
-    text-align: center;
-    width: 100%;
-}
-
-h1 {
-    font-family: "Libre Baskerville", Georgia, serif;
-    font-size: 1.5rem;
-}
-
-main {
-    width: 100%;
-    padding-bottom: 2rem;
+#search {
     flex: 1;
+    min-height: 56px;
+    padding: 8px 12px;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 20px;
+    color: #000000;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 0;
+    margin-right: 8px;
 }
+
+/* ---- buttons ---- */
+
+button {
+    min-height: 56px;
+    padding: 8px 18px;
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #000000;
+    background: #ffffff;
+    border: 3px solid #000000;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+button.primary,
+button.active {
+    background: #000000;
+    color: #ffffff;
+}
+
+button[disabled] {
+    border-style: dashed;
+}
+
+/* ---- category tabs ---- */
+
+#tabs {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+#tabs button {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    margin-right: 6px;
+    padding: 6px 2px;
+    font-size: 16px;
+}
+
+#tabs button:last-child {
+    margin-right: 0;
+}
+
+/* ---- status banner ---- */
+
+#banner {
+    border: 3px solid #000000;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+#banner button {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* ---- package cards ---- */
 
 .card {
-    border: 1px solid #9ca3af;
-    border-radius: 0.5rem;
-    padding: 1rem;
-    margin-top: 1rem;
-    width: 100%;
-    max-width: 100%;
+    border: 3px solid #000000;
+    padding: 12px;
+    margin-bottom: 12px;
 }
 
-.header {
+.card-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.5rem;
-    width: 100%;
-}
-
-.title-box {
-    flex: 1;
+    align-items: baseline;
 }
 
 .title {
     font-family: "Libre Baskerville", Georgia, serif;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.version {
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-left: 8px;
 }
 
 .author {
-    font-size: 0.75rem;
-    color: #4b5563;
+    font-size: 16px;
+    margin-bottom: 4px;
 }
 
 .description {
-    color: #374151;
-    margin-bottom: 0.75rem;
-    line-height: 1.5;
-    font-size: 0.875rem;
+    font-size: 17px;
+    margin-bottom: 10px;
 }
 
-.install-button {
-    width: 100%;
+.badge {
+    display: inline-block;
+    font-size: 14px;
+    font-weight: 700;
+    border: 2px solid #000000;
+    padding: 0 6px;
+    margin-bottom: 6px;
+    margin-right: 6px;
+}
+
+.badge.inverse {
+    background: #000000;
+    color: #ffffff;
+}
+
+.actions {
+    display: flex;
+}
+
+.actions button {
+    flex: 1;
+    margin-right: 8px;
+}
+
+.actions button:last-child {
+    margin-right: 0;
+}
+
+.empty {
+    border: 3px dashed #000000;
+    padding: 24px 12px;
+    text-align: center;
+    font-size: 20px;
+}
+
+/* ---- pager ---- */
+
+#pager {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    border: 2px solid #111827;
-    border-radius: 0.375rem;
-    background: none;
-    color: inherit;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
-    font-size: 0.875rem;
+    margin: 4px 0 12px 0;
 }
+
+#pager button {
+    flex: 1;
+}
+
+#pageinfo {
+    padding: 0 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* ---- details / log overlay ---- */
+
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    padding: 12px;
+    z-index: 10;
+    overflow: hidden;
+}
+
+#overlay h2 {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 26px;
+    margin-bottom: 4px;
+}
+
+#overlay .meta {
+    border-top: 2px solid #000000;
+    border-bottom: 2px solid #000000;
+    padding: 6px 0;
+    margin: 8px 0;
+    font-size: 16px;
+}
+
+#overlay .meta div {
+    margin: 2px 0;
+}
+
+#overlay .body {
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+#overlay pre {
+    border: 2px solid #000000;
+    padding: 8px;
+    font-size: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-bottom: 12px;
+}
+
+#overlay .actions {
+    margin-bottom: 8px;
+}
+
+/* ---- footer ---- */
 
 footer {
-    border-top: 1px solid #e5e7eb;
-    padding: 1rem;
+    border-top: 2px solid #000000;
+    padding-top: 8px;
     text-align: center;
-    font-size: 0.875rem;
-    color: #4b5563;
-    width: 100%;
-}
-
-.icon {
-    width: 1em;
-    height: 1em;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    fill: none;
-}
-
-button {
-  margin: 5px 3px 5px;
-  padding: 14px 30px;
-  border-radius: 5px;
-  border: 1px solid #d3d6da;
-  background-color: #d3d6da;
-  font-size: 24px;
-  font-family: "Inter";
-  cursor: pointer;
-}
-
-.tag {
-    display: inline-block;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    padding: 0.125rem 0.375rem;
-    border: 1px solid #9ca3af;
-    margin-right: 0.25rem;
-    margin-bottom: 0.3rem;
-    color: #374151;
-}
-
-@media (min-width: 768px) {
-    main {
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-
-    .card {
-        padding: 1.5rem;
-    }
+    font-size: 14px;
 }

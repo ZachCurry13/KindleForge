@@ -10,17 +10,33 @@
 </head>
 <body>
     <div class="container">
+        <div id="topbar">
+            <input id="search" type="text" placeholder="Search apps, authors..." autocomplete="off" autocorrect="off" autocapitalize="off">
+            <button id="refresh" type="button">Refresh</button>
+        </div>
+
+        <div id="tabs"></div>
+
+        <div id="banner" class="hidden"></div>
+
         <main id="packages">
             <!-- Packages Inserted Through JS -->
         </main>
-    
+
+        <div id="pager">
+            <button id="prev" type="button">&laquo; Page Up</button>
+            <span id="pageinfo"></span>
+            <button id="next" type="button">Page Down &raquo;</button>
+        </div>
+
         <footer>
-            <p>2026 KindleForge; Made By Penguins184</p>
-            <p id="js-status">JS Not Working!</p>
-            <p id="abi-status">Unknown ABI!</p>
-            <p>Version 4.1.0b stable.</p>
+            <p>KindleForge KPM Edition; Original By Penguins184</p>
+            <p><span id="js-status">JS Not Working!</span> | <span id="abi-status">Unknown ABI!</span> | <span id="catalog-status">No Catalog</span></p>
         </footer>
     </div>
+
+    <div id="overlay" class="hidden"></div>
+
     <script src="script.js"></script>
 </body>
 </html>
