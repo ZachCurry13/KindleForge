@@ -32,7 +32,7 @@ func TestLiveKindleTweaksPackagesUnpackAndValidate(t *testing.T) {
 			}
 			dir := t.TempDir()
 			archive := filepath.Join(dir, id+".kpkg")
-			if err := kpkgDownload(c, u, archive); err != nil {
+			if err := kpkgDownload(c, u, archive, ""); err != nil {
 				t.Fatalf("%s/%s: %v", plat, id, err)
 			}
 			out := filepath.Join(dir, "x")

@@ -3,6 +3,11 @@
     {
       "id": "kindletweaks",
       "url": "https://kindletweaks.github.io/Repo/manifest.json"
+    },
+    {
+      "id": "community",
+      "url": "https://raw.githubusercontent.com/ZachCurry13/KindleForge/master/catalog/community/manifest.json",
+      "requireHash": true
     }
   ],
   "ratingsURL": "https://kindleforge-ratings.kindleforge-ratings.workers.dev",
@@ -131,5 +136,6 @@
     "curl",
     "kindleforge",
     "template.kpm"
-  ]
+  ],
+  "suggestURL": "https://github.com/ZachCurry13/KindleForge/issues/new?template=suggest-app.yml"
 }

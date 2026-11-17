@@ -16,6 +16,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func logf(format string, a ...any) {
@@ -248,6 +249,7 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 		}
 	}
 	cat := buildCatalog(c, rf, sync)
+	prevSynced, _ := previousSyncTimes(c)
 	if !sync {
 		keepSyncSources(c, &cat)
 	}
@@ -255,11 +257,24 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 		flushPending(c, rf.RatingsURL) // send ratings made while offline
 	}
 	applyRatings(c, rf, loadRatingsFile(c, sync), &cat)
+	if strings.HasPrefix(rf.SuggestURL, "https://") {
+		cat.SuggestURL = rf.SuggestURL
+	}
 
-	reachable := false
+	// "fresh" means real data came from the network just now. Falling back to
+	// a saved copy is usable, but it is not an update.
+	fresh := false
 	for _, r := range cat.Repos {
-		if r.Source != "unavailable" {
-			reachable = true
+		if r.Source == "network" {
+			fresh = true
+		}
+	}
+	if sync {
+		now := time.Now().UTC().Format(time.RFC3339)
+		cat.AttemptedAt = now
+		cat.SyncedAt = prevSynced
+		if fresh {
+			cat.SyncedAt = now
 		}
 	}
 	if err := writeCatalog(c, cat); err != nil {
@@ -276,9 +291,9 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 		} else if info.Available {
 			fmt.Printf("[KFPM] KindleForge %s is available (installed: %s)\n", info.Latest, info.Current)
 		}
-		if !reachable {
+		if !fresh {
 			setStatus("catalogStatus", "failure")
-			return fmt.Errorf("no repository reachable and no cache available")
+			return fmt.Errorf("could not reach the repositories; showing the saved list")
 		}
 		setStatus("catalogStatus", "success")
 		fmt.Printf("[KFPM] Catalog updated: %d packages\n", len(cat.Packages))
@@ -354,6 +369,7 @@ func keepSyncSources(c Config, cat *Catalog) {
 	if prev.GeneratedAt != "" {
 		cat.GeneratedAt = prev.GeneratedAt
 	}
+	cat.SyncedAt, cat.AttemptedAt = prev.SyncedAt, prev.AttemptedAt
 	old := map[string]string{}
 	for _, r := range prev.Repos {
 		old[r.ID] = r.Source
@@ -363,4 +379,17 @@ func keepSyncSources(c Config, cat *Catalog) {
 			cat.Repos[i].Source = src
 		}
 	}
+}
+
+// previousSyncTimes returns the SyncedAt / AttemptedAt of the catalog on disk.
+func previousSyncTimes(c Config) (synced, attempted string) {
+	data, err := os.ReadFile(c.path("catalog.json"))
+	if err != nil {
+		return "", ""
+	}
+	var prev Catalog
+	if json.Unmarshal(data, &prev) != nil {
+		return "", ""
+	}
+	return prev.SyncedAt, prev.AttemptedAt
 }

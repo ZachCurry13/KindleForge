@@ -67,6 +67,12 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
 
+## 5f. Fresh list, suggestions
+- [ ] Open the app after the list is >24h old (or delete `syncedAt` from `.KFPM/catalog.json`): it refreshes by itself once, and the footer says "List updated just now".
+- [ ] Offline and stale: it tries once, fails, and does not retry on the next open within 6 hours; the footer keeps showing the true age.
+- [ ] System menu > **Suggest an App** shows the address.
+- [ ] After a refresh, `Community` is a repo in the catalog (it has no apps until a maintainer adds one).
+
 ## 5e. KindleTweaks packages (KUALA, Gargoyle, ...) on a gingr-only Kindle
 - [ ] They appear in the store with versions. Install **KUALA** (small): card shows INSTALLED v1.1.0, `documents/kuala.sh` and `/mnt/us/kuala` exist. [unverified on device: hooks, `/bin/sh`]
 - [ ] Uninstall it: both are removed.

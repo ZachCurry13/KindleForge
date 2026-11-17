@@ -41,9 +41,19 @@ Optional: copy `KindleForge/KFPM-Diag.sh` into `documents/` too. Running it writ
 - **Refresh the list:** the **Refresh** button, or *Refresh Packages* in the system menu.
 - **When something fails:** tap **View log** (in the banner or under Details) to see what KPM printed.
 
+## Keeping the list fresh
+- **Automatically:** when you open KindleForge and the saved list is more than **24 hours old**, it refreshes by itself (if the Kindle is online). If that attempt fails (for example you are offline) it will not try again for **6 hours**, so opening the app offline is not slow.
+- **By hand:** tap **Refresh** any time.
+- **The footer** shows the age: "List updated 3 h ago". After 7 days it says "List is 9 days old: tap Refresh". A Refresh that could only use the saved copy says so and does **not** reset the clock.
+- **Where new apps come from:** a daily job on GitHub keeps the package info current, new packages in the upstream list appear on their own, and apps added to the community repository appear on the next Refresh. None of this needs an app update.
+
+## Suggest an app
+System menu > **Suggest an App** shows the address of the suggestion form (open it on a phone or computer). The most-wanted suggestions are listed in [SUGGESTIONS.md](SUGGESTIONS.md). Accepted apps are read and checked by hand and then pinned to a checksum, so a package that changes afterwards is refused. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Two package sources, one store
 - **gingrspacecadet/kpm packages** (the ones in the daily-synced list) are installed with your Kindle's `kpm -S` / `kpm -R`. That KPM tracks no versions, so these have no Update button.
 - **KindleTweaks repository packages** (KUALA, Gargoyle, KinAMP, LARK, RAnki, and any repo you add to `repos.json`) are installed **by KindleForge itself**: it downloads the package, unpacks it safely, runs its install script, and remembers the version, so **Update** and **Update All Packages** work for these. Uninstalling runs the package's own uninstall script; your data (RAnki's cards, LARK's listening history, KinAMP's settings) is left in place by those scripts.
+- **Community repository:** apps people suggest are added to `catalog/community/manifest.json` with a **sha256 pin**, and that repository is marked `requireHash`: KindleForge refuses any package from it that has no pin or whose download does not match.
 - **Trust:** the install and uninstall scripts come from the repository and run as root on the Kindle, exactly as with any KPM. The repository publishes no checksums, so KindleForge relies on https. I statically reviewed the five current packages' scripts: they only write under `/mnt/us`. Only add repositories you trust.
 
 ## Logs

@@ -13,6 +13,9 @@
 var KFPM_BIN = "/var/local/mesquite/KindleForge/binaries/KFPM";
 var UTILD = "com.kindlemodding.utild";
 var DATA_BASE = (document.location.protocol === "file:") ? "file:///mnt/us/.KFPM/" : "./dev/"; // ./dev/ = desktop testing only
+var STALE_MS = 24 * 3600 * 1000;      // refresh by itself when the list is older than this
+var RETRY_MS = 6 * 3600 * 1000;       // ...but do not retry a failed attempt more often than this
+var OLD_MS = 7 * 24 * 3600 * 1000;    // warn in the footer past this
 var PAGE_SIZE = 3; // what fits on one e-ink screen without scrolling
 var OP_TIMEOUT_MS = 6 * 60 * 1000;
 var ID_RE = /^[A-Za-z0-9._-]{1,64}$/; // ids end up in a shell command line
@@ -71,7 +74,8 @@ function update() {
           { "id": "KFORGE_REFRESH", "state": "enabled", "handling": "notifyApp", "label": "Refresh Packages", "position": 0 },
           { "id": "KFORGE_UPGRADE", "state": "enabled", "handling": "notifyApp", "label": "Update All Packages", "position": 1 },
           { "id": "KFORGE_CHECKUPDATE", "state": "enabled", "handling": "notifyApp", "label": "Check for KindleForge Update", "position": 2 },
-          { "id": "KFORGE_CLEANUP", "state": "enabled", "handling": "notifyApp", "label": "Clean Up Kindle", "position": 3 }
+          { "id": "KFORGE_CLEANUP", "state": "enabled", "handling": "notifyApp", "label": "Clean Up Kindle", "position": 3 },
+          { "id": "KFORGE_SUGGEST", "state": "enabled", "handling": "notifyApp", "label": "Suggest an App", "position": 4 }
         ],
         "selectionMode": "none",
         "closeOnUse": true
@@ -117,6 +121,7 @@ window.kindle.appmgr.ongo = function() {
     else if (id === "KFORGE_UPGRADE") startUpgradeAll();
     else if (id === "KFORGE_CHECKUPDATE") startCheck();
     else if (id === "KFORGE_CLEANUP") startCleanup("scan", "Scanning your Kindle");
+    else if (id === "KFORGE_SUGGEST") showSuggest();
   });
 };
 
@@ -578,16 +583,50 @@ function renderUpdate() {
   box.appendChild(row);
 }
 
+// Dates in catalog.json are RFC 3339 UTC ("2026-11-17T20:08:50Z"). Parsed by
+// hand because old WebKit builds are unreliable with Date.parse.
+function parseISO(iso) {
+  var m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)Z$/.exec(iso || "");
+  if (!m) return null;
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+}
+
+function ageMs(iso) {
+  var t = parseISO(iso);
+  if (t === null) return null;
+  var d = new Date().getTime() - t;
+  return d < 0 ? 0 : d; // a Kindle clock that is behind must not look "stale"
+}
+
+function agoText(ms) {
+  var min = Math.floor(ms / 60000);
+  if (min < 2) return "just now";
+  if (min < 120) return min + " min ago";
+  var h = Math.floor(min / 60);
+  if (h < 48) return h + " h ago";
+  return Math.floor(h / 24) + " days ago";
+}
+
+// Should the app refresh the list on its own? Yes when the last real update is
+// old, unless an attempt was made recently (so being offline does not cause a
+// slow retry on every launch).
+function shouldAutoSync() {
+  if (!catalog) return true;
+  var synced = ageMs(catalog.syncedAt);
+  if (synced !== null && synced < STALE_MS) return false;
+  var tried = ageMs(catalog.attemptedAt);
+  if (tried !== null && tried < RETRY_MS) return false;
+  return true;
+}
+
 function renderFooter() {
   $("app-version").textContent = "KindleForge " + (updateInfo && updateInfo.current ? "v" + updateInfo.current : "");
   var s = "No Catalog";
   if (catalog) {
-    var anyNet = false, anyCache = false;
-    for (var i = 0; i < catalog.repos.length; i++) {
-      if (catalog.repos[i].source === "network") anyNet = true;
-      if (catalog.repos[i].source === "cache") anyCache = true;
-    }
-    s = (anyCache && !anyNet ? "Offline list" : "List") + ": " + (catalog.generatedAt || "").substring(0, 10);
+    var synced = ageMs(catalog.syncedAt);
+    if (synced === null) s = "List: not updated yet";
+    else if (synced > OLD_MS) s = "List is " + agoText(synced).replace(" ago", " old") + ": tap Refresh";
+    else s = "List updated " + agoText(synced);
     if (catalog.configSource) s += " (" + catalog.configSource + ")";
     if (catalog.backend) s += " | KPM: " + catalog.backend;
   }
@@ -796,6 +835,23 @@ function showCleanup() {
   o.appendChild(r3);
 }
 
+function showSuggest() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  o.appendChild(el("h2", "", "Suggest an app"));
+  var url = catalog && catalog.suggestURL;
+  if (!url) {
+    o.appendChild(el("p", "body", "Not available yet. Tap Refresh, then try again."));
+  } else {
+    o.appendChild(el("p", "body", "Want an app in the store? On your phone or computer, open this address and fill in the short form:"));
+    o.appendChild(el("pre", "", url));
+    o.appendChild(el("p", "small", "Add a thumbs up to suggestions you also want: the most wanted are reviewed first. Every app is read and checked by hand before it is added, because install scripts run as root on your Kindle."));
+  }
+  var back = cleanBtn("Back", "close", "primary");
+  o.appendChild(back);
+}
+
 function showBiggest() {
   var o = $("overlay");
   clear(o);
@@ -954,6 +1010,6 @@ document.addEventListener("DOMContentLoaded", function() {
   loadUpdateInfo(function() { renderAll(); }); // installed version + any pending update
   loadCatalog(function(parsed) {
     renderAll();
-    if (!parsed) startSync();
+    if (shouldAutoSync()) startSync(); // first run, or the list has gone stale
   });
 });

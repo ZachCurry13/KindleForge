@@ -193,6 +193,10 @@ func (c Config) path(parts ...string) string {
 type Repo struct {
 	ID  string `json:"id"`
 	URL string `json:"url"`
+	// RequireHash: refuse any package from this repo whose artifact has no
+	// sha256 pin. Used for the community repo, whose downloads live on
+	// authors' servers and are reviewed once by a maintainer.
+	RequireHash bool `json:"requireHash,omitempty"`
 }
 
 type ReposFile struct {
@@ -202,6 +206,8 @@ type ReposFile struct {
 	Categories map[string]string `json:"categories"`
 	// Base URL of the ratings endpoint (https). Empty disables rating.
 	RatingsURL string `json:"ratingsURL,omitempty"`
+	// Where people go to suggest an app (https), shown by "Suggest an App".
+	SuggestURL string `json:"suggestURL,omitempty"`
 
 	// User file only: ids of catalog repos to hide.
 	Disable []string `json:"disable,omitempty"`
@@ -328,7 +334,7 @@ func loadRepos(c Config, online bool) ReposFile {
 		disabled[id] = true
 	}
 
-	out := ReposFile{Source: base.Source, RatingsURL: base.RatingsURL, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
+	out := ReposFile{Source: base.Source, RatingsURL: base.RatingsURL, SuggestURL: base.SuggestURL, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
 	if v := os.Getenv("KFPM_RATINGS_ENDPOINT"); v != "" {
 		out.RatingsURL = v
 	}

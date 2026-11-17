@@ -354,3 +354,14 @@ func TestLegacySeedIgnoredAndUserFileNotOverwritten(t *testing.T) {
 		t.Error("user repos.json was modified")
 	}
 }
+
+func readJSON(t *testing.T, path string, v any) {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, v); err != nil {
+		t.Fatal(err)
+	}
+}

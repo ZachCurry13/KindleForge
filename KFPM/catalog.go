@@ -54,6 +54,7 @@ type Artifact struct {
 	Version   Version           `json:"version"`
 	Platforms []string          `json:"supported_platforms"`
 	Deps      []json.RawMessage `json:"dependencies"`
+	SHA256    string            `json:"sha256,omitempty"` // optional: pins the exact download
 }
 
 func (a Artifact) supports(platform string) bool {
@@ -94,9 +95,12 @@ type RepoStatus struct {
 
 type Catalog struct {
 	GeneratedAt    string       `json:"generatedAt"`
+	SyncedAt       string       `json:"syncedAt"`     // last time real data was fetched from the network
+	AttemptedAt    string       `json:"attemptedAt"`  // last Refresh attempt, successful or not
 	ConfigSource   string       `json:"configSource"` // github | cache | built-in
 	Backend        string       `json:"backend"`      // modding | gingr
 	RatingsEnabled bool         `json:"ratingsEnabled"`
+	SuggestURL     string       `json:"suggestURL,omitempty"`
 	Platform       string       `json:"platform"`
 	ABI            string       `json:"abi"`
 	Repos          []RepoStatus `json:"repos"`

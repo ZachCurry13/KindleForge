@@ -1,0 +1,45 @@
+name: Update suggestions
+
+# Rebuilds SUGGESTIONS.md from the issues labelled "app-suggestion" (newest
+# first by 👍). Runs when an issue changes and once a day (reactions do not
+# trigger events). Issue text is never put on a shell command line: the script
+# reads the issues through the API and only writes sanitised titles.
+
+on:
+  issues:
+    types: [opened, edited, labeled, unlabeled, closed, reopened]
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: suggestions
+  cancel-in-progress: false
+
+jobs:
+  wishlist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Self-test
+        run: python3 scripts/test_pull_suggestions.py
+
+      - name: Rebuild SUGGESTIONS.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/pull_suggestions.py "$GITHUB_REPOSITORY" SUGGESTIONS.md
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- SUGGESTIONS.md; then echo "no change"; exit 0; fi
+          git config user.name "kindleforge-suggestions[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add SUGGESTIONS.md
+          git commit -m "Update app suggestions"
+          git pull --rebase
+          git push

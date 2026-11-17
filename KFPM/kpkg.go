@@ -17,6 +17,8 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -139,7 +141,7 @@ func resolveArtifactURL(manifestURL, rel string) (string, error) {
 	return u.String(), nil
 }
 
-func kpkgDownload(c Config, rawURL, dest string) error {
+func kpkgDownload(c Config, rawURL, dest, wantSHA string) error {
 	client := &http.Client{Timeout: 10 * time.Minute}
 	if httpClient != nil && httpClient.Transport != nil { // tests swap in a client that trusts the fake server
 		client = &http.Client{Timeout: 10 * time.Minute, Transport: httpClient.Transport}
@@ -162,9 +164,13 @@ func kpkgDownload(c Config, rawURL, dest string) error {
 		return err
 	}
 	defer f.Close()
-	n, err := io.Copy(f, io.LimitReader(resp.Body, kpkgMaxDownload+1))
+	h := sha256.New()
+	n, err := io.Copy(io.MultiWriter(f, h), io.LimitReader(resp.Body, kpkgMaxDownload+1))
 	if err != nil {
 		return err
+	}
+	if wantSHA != "" && hex.EncodeToString(h.Sum(nil)) != strings.ToLower(strings.TrimSpace(wantSHA)) {
+		return fmt.Errorf("checksum mismatch: the download is not the reviewed package; refusing to install")
 	}
 	if n > kpkgMaxDownload {
 		return fmt.Errorf("package is larger than %d MB", kpkgMaxDownload>>20)
@@ -356,6 +362,9 @@ func kpkgInstall(c Config, rf ReposFile, id string, verbose bool) error {
 	if src.Art == nil {
 		return fmt.Errorf("%s is not available for this device (%s)", id, c.Platform)
 	}
+	if src.Repo.RequireHash && !validSHA256(src.Art.SHA256) {
+		return fmt.Errorf("%s has no checksum pin and its repository requires one", id)
+	}
 	if len(src.Art.Deps) > 0 {
 		return fmt.Errorf("%s needs other packages, which this installer does not handle yet", id)
 	}
@@ -369,7 +378,7 @@ func kpkgInstall(c Config, rf ReposFile, id string, verbose bool) error {
 	defer os.RemoveAll(tmp)
 	archive := filepath.Join(tmp, id+".kpkg")
 	appendLog(c, "downloading "+artURL)
-	if err := kpkgDownload(c, artURL, archive); err != nil {
+	if err := kpkgDownload(c, artURL, archive, src.Art.SHA256); err != nil {
 		return err
 	}
 
@@ -455,4 +464,12 @@ func kpkgUpgradeAll(c Config, rf ReposFile, verbose bool) (int, error) {
 		return done, fmt.Errorf("could not update: %s", strings.Join(failed, ", "))
 	}
 	return done, nil
+}
+
+func validSHA256(s string) bool {
+	if len(s) != 64 {
+		return false
+	}
+	_, err := hex.DecodeString(s)
+	return err == nil
 }

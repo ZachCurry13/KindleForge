@@ -1,0 +1,33 @@
+name: Report a problem
+description: Something in KindleForge did not work
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: KindleForge version
+      description: Shown at the bottom of the app (for example v5.0.0-alpha.6)
+  - type: input
+    id: device
+    attributes:
+      label: Kindle model and firmware
+  - type: dropdown
+    id: kpm
+    attributes:
+      label: Which KPM do you have?
+      options:
+        - gingrspacecadet/kpm (kpm -S / -R)
+        - KindleModding KPM (hdnext / jb.sh)
+        - Not sure
+  - type: markdown
+    attributes:
+      value: |
+        **Please attach `kindleforge-log.txt`** from the top level of the Kindle's storage (over USB). It lists what KindleForge did and what each step printed. If it is a Wi-Fi problem, run **KFPM Network Test** and attach `kfpm-net.txt` too.
+        Check both files before posting; they can contain package names and your own folder names, not passwords.

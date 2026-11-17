@@ -1,0 +1,73 @@
+name: Suggest an app
+description: Ask for an app to be added to the KindleForge store
+title: "[App] "
+labels: ["app-suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Suggestions are **reviewed by hand** before anything is added. Please add a 👍 to suggestions you also want: the most-wanted ones are looked at first.
+        Install scripts run as **root on Kindles**, so only apps from sources we can read and pin are added.
+  - type: input
+    id: name
+    attributes:
+      label: App name
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Project link
+      description: Where the app lives (GitHub repo, forum thread, ...)
+      placeholder: https://github.com/someone/app
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What does it do?
+      description: One or two sentences, as you would want it shown in the store.
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: How is it packaged?
+      options:
+        - It already has a .kpkg (KindleTweaks / KindleModding KPM format)
+        - It is in the gingrspacecadet/kpm package list
+        - A zip or script with install instructions
+        - Not packaged yet / I don't know
+    validations:
+      required: true
+  - type: checkboxes
+    id: devices
+    attributes:
+      label: Which Kindles does it run on?
+      options:
+        - label: Newer Kindles (hard-float, kindlehf)
+        - label: Older Kindles (soft-float, kindlepw2)
+        - label: I'm not sure
+  - type: input
+    id: license
+    attributes:
+      label: License
+      placeholder: GPLv3, MIT, ...
+  - type: dropdown
+    id: author
+    attributes:
+      label: Are you the author?
+      options:
+        - "No"
+        - "Yes"
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else?
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: Review
+      options:
+        - label: I understand the app will be reviewed and its install script read before it is added.
+          required: true

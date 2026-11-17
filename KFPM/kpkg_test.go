@@ -4,6 +4,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -70,6 +72,7 @@ type repoServer struct {
 	pkgs    map[string][]byte // artifact path -> bytes
 	url     string            // artifact url as written in the manifest
 	deps    []string
+	sha     string // sha256 pin written into the manifest ("" = none)
 }
 
 func newRepo(t *testing.T) *repoServer {
@@ -80,7 +83,7 @@ func newRepo(t *testing.T) *repoServer {
 			deps = append(deps, rs.deps...)
 			m := map[string]any{"manifest_version": 2, "id": "test", "packages": map[string]any{
 				"demo": map[string]any{"name": "Demo", "author": "Tester", "description": "A demo package.",
-					"artifacts": []any{map[string]any{"url": rs.url, "version": rs.version, "dependencies": deps, "supported_platforms": []string{"kindlehf"}}}},
+					"artifacts": []any{map[string]any{"url": rs.url, "version": rs.version, "dependencies": deps, "supported_platforms": []string{"kindlehf"}, "sha256": rs.sha}}},
 			}}
 			json.NewEncoder(w).Encode(m)
 			return
@@ -429,4 +432,47 @@ func TestCleanupCanRemoveAndRestoreLogs(t *testing.T) {
 	if r := restoreTrash(c); r.Count != 5 {
 		t.Errorf("restore %+v", r)
 	}
+}
+
+func TestKpkgChecksumPin(t *testing.T) {
+	pkg := func(t *testing.T) []byte { return goodPkg(t, "demo", [3]int{1, 0, 0}, okInstall) }
+	sum := func(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+
+	t.Run("correct pin installs", func(t *testing.T) {
+		rs := newRepo(t)
+		b := pkg(t)
+		rs.pkgs[rs.url], rs.sha = b, sum(b)
+		c, rf := kpkgConfig(t, rs)
+		if err := kpkgInstall(c, rf, "demo", false); err != nil {
+			t.Fatal(err)
+		}
+	})
+	t.Run("swapped download is refused", func(t *testing.T) {
+		rs := newRepo(t)
+		rs.sha = sum(pkg(t))                                                            // reviewed this one...
+		rs.pkgs[rs.url] = goodPkg(t, "demo", [3]int{1, 0, 0}, "#!/bin/sh\necho evil\n") // ...author swapped it
+		c, rf := kpkgConfig(t, rs)
+		err := kpkgInstall(c, rf, "demo", false)
+		if err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
+			t.Fatalf("got %v", err)
+		}
+		if len(loadKpkgInstalled(c)) != 0 || exists_(kpkgPkgDir(c, "demo")) {
+			t.Error("nothing may be installed after a checksum failure")
+		}
+	})
+	t.Run("requireHash repo refuses unpinned packages", func(t *testing.T) {
+		rs := newRepo(t)
+		rs.pkgs[rs.url] = pkg(t)
+		c, rf := kpkgConfig(t, rs)
+		rf.Repos[0].RequireHash = true
+		err := kpkgInstall(c, rf, "demo", false)
+		if err == nil || !strings.Contains(err.Error(), "requires one") {
+			t.Fatalf("got %v", err)
+		}
+		rs.sha = "not-a-hash"
+		loadManifest(c, rf.Repos[0], true)
+		if kpkgInstall(c, rf, "demo", false) == nil {
+			t.Error("a malformed pin must not count")
+		}
+	})
 }

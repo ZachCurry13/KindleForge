@@ -1,0 +1,7 @@
+{
+  "manifest_version": 2,
+  "id": "kindleforge-community",
+  "name": "KindleForge Community",
+  "description": "Apps suggested by the community and reviewed by hand. Every package is pinned to a checksum. Add one with scripts/add_app.py.",
+  "packages": {}
+}
