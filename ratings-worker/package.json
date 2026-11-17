@@ -1,0 +1,15 @@
+{
+  "name": "kindleforge-ratings",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Anonymous package ratings for KindleForge (Cloudflare Worker + D1)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/",
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.164.0"
+  }
+}

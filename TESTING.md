@@ -72,6 +72,11 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Move one category (e.g. crash dumps) to the trash: the files leave `documents/`; **Restore from trash** puts them back.
 - [ ] Your books, My Clippings and KOReader are untouched.
 
+## 5d. Ratings (after the Worker is deployed and `ratingsURL` is set)
+- [ ] Install a package: banner shows **Rate it**; Details shows 1-5. Tap a number: "Thanks! Your rating was sent." (needs internet to the Worker).
+- [ ] With Wi-Fi off, rate: "Saved. It will be sent next time you are online." Then Refresh online: it is sent.
+- [ ] After the Action has run and 3+ votes exist, the card shows "Rating X / 5 (N)".
+
 ## 6. Reinstall behaviour
 - [ ] Re-run `KindleForge.sh` (or use a new release copy): `/mnt/us/.KFPM/` (repos, cache, catalog) survives and installed packages are unaffected.
 

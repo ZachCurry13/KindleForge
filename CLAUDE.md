@@ -21,6 +21,9 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 - `modding` = KindleModding/KPM (see above), preferred when both exist.
 - `gingr` = gingrspacecadet/kpm, `gingr.go`: `/usr/local/bin/kpm`, `kpm -S/-R/-Ql/-Qr`, installed ids in `/mnt/us/kpm/packages.list`, mirrors in `/etc/kpm/mirrors.conf` (first field = list URL, list = names only). Exit codes are unreliable (it can crash after a good install, and reads `kpm -Ql kpmgui` unchecked), so success is decided by re-reading packages.list and kpm gets an explicit PATH. No versions, so no Update/Update All. Display data comes from `packages`/`hidden`/`categories` in `catalog/config.json`.
 
+## Ratings (`ratings.go`, `ratings-worker/`, `scripts/update_ratings.py`, `.github/workflows/ratings.yml`)
+KFPM `-R <id> <1-5>` records the vote in `.KFPM/my-ratings.json`, POSTs `{pkg,install,stars}` to `ratingsURL` (https only, from `catalog/config.json`), queues it if offline and flushes on `-s`. Install id = random, `.KFPM/install-id`. Averages come from `catalog/ratings.json` (committed by the Action from the Worker's `/aggregate`), cached, shown only at >= minVotes. Worker = Cloudflare Worker + D1 (`ratings-worker/`, `npm test`; deploy steps in its README). Status prop `rateStatus` = sent|queued|failure. Deploying the Worker needs the owner's `wrangler login`; never ask for tokens.
+
 ## Cleanup (`cleanup.go`)
 `-k scan|apply <cats>|restore|empty`. Fixed allowlist of categories (crash, oldforge, dumps, diag, kfupdate, orphansdr); apply re-scans and derives paths itself (UI sends only category ids); moves into `<data>/trash` with a manifest; `allowedPath` blocks protected top-level folders, symlinks and anything outside the roots; restore validates manifest paths; only `empty` really deletes. Writes `cleanup.json` (report + `last` result) after every command; status prop `cleanupStatus`. Tests: `cleanup_test.go`.
 

@@ -80,6 +80,9 @@ type CatPackage struct {
 	InstalledVersion string   `json:"installedVersion"`
 	UpdateAvailable  bool     `json:"updateAvailable"`
 	Dependencies     []string `json:"dependencies"`
+	Rating           float64  `json:"rating,omitempty"` // average, only once enough votes exist
+	RatingCount      int      `json:"ratingCount,omitempty"`
+	MyRating         int      `json:"myRating,omitempty"`
 }
 
 type RepoStatus struct {
@@ -90,13 +93,14 @@ type RepoStatus struct {
 }
 
 type Catalog struct {
-	GeneratedAt  string       `json:"generatedAt"`
-	ConfigSource string       `json:"configSource"` // github | cache | built-in
-	Backend      string       `json:"backend"`      // modding | gingr
-	Platform     string       `json:"platform"`
-	ABI          string       `json:"abi"`
-	Repos        []RepoStatus `json:"repos"`
-	Packages     []CatPackage `json:"packages"`
+	GeneratedAt    string       `json:"generatedAt"`
+	ConfigSource   string       `json:"configSource"` // github | cache | built-in
+	Backend        string       `json:"backend"`      // modding | gingr
+	RatingsEnabled bool         `json:"ratingsEnabled"`
+	Platform       string       `json:"platform"`
+	ABI            string       `json:"abi"`
+	Repos          []RepoStatus `json:"repos"`
+	Packages       []CatPackage `json:"packages"`
 }
 
 // ---- fetching with cache --------------------------------------------------

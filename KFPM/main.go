@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -89,6 +90,30 @@ func main() {
 		resetLog(cfg)
 		os.Exit(exitCode(refreshCatalog(cfg, true, verbose)))
 
+	case "-R":
+		id, ok := pkgArg()
+		if !ok {
+			return
+		}
+		if len(args) < 3 {
+			fmt.Println("[KFPM] -R needs a package id and 1-5 stars")
+			return
+		}
+		stars, _ := strconv.Atoi(args[2])
+		resetLog(cfg)
+		status, err := rateCmd(cfg, loadRepos(cfg, false).RatingsURL, id, stars)
+		if err != nil {
+			fmt.Printf("[KFPM] Rating failed: %v\n", err)
+			appendLog(cfg, "rating failed: "+err.Error())
+		} else {
+			fmt.Printf("[KFPM] Rating %s for '%s': %d stars\n", status, id, stars)
+		}
+		refreshCatalog(cfg, false, verbose) // catalog first: the status event triggers a reload
+		setStatus("rateStatus", status)
+		if err != nil {
+			os.Exit(1)
+		}
+
 	case "-k":
 		resetLog(cfg)
 		err := runCleanup(cfg, args[1:])
@@ -150,6 +175,7 @@ kfpm -u <ID> [-v]    Update a package to the newest version
 kfpm -r <ID> [-v]    Uninstall a package
 kfpm -U [-v]         Upgrade every installed package
 kfpm -s [-v]         Sync: refresh catalog definition + repo manifests, check for app update
+kfpm -R <ID> <1-5>   Rate an installed package (sent anonymously; queued if offline)
 kfpm -k scan         Cleanup: scan the Kindle for removable files (read-only)
 kfpm -k apply a,b    Cleanup: move the chosen categories to the trash (restorable)
 kfpm -k restore      Cleanup: put everything in the trash back
@@ -201,6 +227,10 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 	if !sync {
 		keepSyncSources(c, &cat)
 	}
+	if sync {
+		flushPending(c, rf.RatingsURL) // send ratings made while offline
+	}
+	applyRatings(c, rf, loadRatingsFile(c, sync), &cat)
 
 	reachable := false
 	for _, r := range cat.Repos {

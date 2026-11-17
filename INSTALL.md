@@ -61,6 +61,9 @@ Your repo list, cached catalog and installed packages are kept: they live in `/m
 2. Delete `documents/KindleForge/` and `documents/KindleForge.sh` over USB.
 3. Optional cleanup: delete `/mnt/us/.KFPM/` (repo list, cache, logs). The copy in `/var/local/mesquite/KindleForge` and the app registration need a shell to remove; leaving them is harmless, and reinstalling overwrites them.
 
+## Rating packages
+Once ratings are switched on (the catalog says so), an installed package shows **Rate it** after installing, and **1 to 5** buttons in its **Details** view. Averages appear on the cards once a package has at least 3 votes. Ratings are **anonymous**: the app sends only the package id, your 1-5 vote and a random install id (not your Kindle's serial number). Offline? The rating is saved and sent next time you Refresh. Change your vote any time by tapping another number. Details: [ratings-worker/README.md](ratings-worker/README.md).
+
 ## Clean up your Kindle
 System menu > **Clean Up Kindle**. KindleForge scans (read-only) and lists what it found, with sizes:
 - **Crash dumps** (`pillowd_*` / `mesquite_*` ... `_crash`), **old KindleForge leftovers** (`KF-Update-Temp`, old `installed.txt`), **Indexer dumps**, **KindleForge test reports** and **download leftovers**: on by default.

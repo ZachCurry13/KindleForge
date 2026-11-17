@@ -1,0 +1,13 @@
+name = "kindleforge-ratings"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Created with:  npx wrangler d1 create kindleforge-ratings
+# then paste the printed database_id below. ("local" works for `npm run dev`.)
+[[d1_databases]]
+binding = "DB"
+database_name = "kindleforge-ratings"
+database_id = "REPLACE_WITH_ID_FROM_d1_create"
+
+[vars]
+MIN_VOTES = "3"

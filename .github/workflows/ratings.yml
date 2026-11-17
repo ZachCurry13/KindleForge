@@ -1,0 +1,43 @@
+name: Update ratings
+
+# Pulls the anonymous vote totals from the ratings endpoint and publishes them
+# as catalog/ratings.json, which KindleForge reads. Needs one repository
+# VARIABLE (not a secret): RATINGS_URL = https://<your-worker>.workers.dev
+# Settings > Secrets and variables > Actions > Variables. If it is unset the
+# job does nothing. On a fork, enable Actions first (Actions tab).
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ratings
+  cancel-in-progress: false
+
+jobs:
+  ratings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch totals and update catalog/ratings.json
+        env:
+          RATINGS_URL: ${{ vars.RATINGS_URL }}
+        run: |
+          if [ -z "$RATINGS_URL" ]; then echo "RATINGS_URL is not set; nothing to do"; exit 0; fi
+          case "$RATINGS_URL" in https://*) ;; *) echo "RATINGS_URL must be https"; exit 1;; esac
+          curl -fsS --retry 3 --max-time 30 "${RATINGS_URL%/}/aggregate" -o "$RUNNER_TEMP/aggregate.json"
+          python3 scripts/update_ratings.py "$RUNNER_TEMP/aggregate.json" catalog/ratings.json
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- catalog/ratings.json; then echo "no change"; exit 0; fi
+          git config user.name "kindleforge-ratings[bot]"
+          git config user.email "actions@users.noreply.github.com"
+          git add catalog/ratings.json
+          git commit -m "Update ratings"
+          git push

@@ -1,1 +1,3 @@
 dist/
+ratings-worker/node_modules/
+ratings-worker/.wrangler/

@@ -200,6 +200,9 @@ type ReposFile struct {
 	// package-id -> category. Manifests carry no category data, so the
 	// storefront tabs rely on this.
 	Categories map[string]string `json:"categories"`
+	// Base URL of the ratings endpoint (https). Empty disables rating.
+	RatingsURL string `json:"ratingsURL,omitempty"`
+
 	// User file only: ids of catalog repos to hide.
 	Disable []string `json:"disable,omitempty"`
 
@@ -325,7 +328,10 @@ func loadRepos(c Config, online bool) ReposFile {
 		disabled[id] = true
 	}
 
-	out := ReposFile{Source: base.Source, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
+	out := ReposFile{Source: base.Source, RatingsURL: base.RatingsURL, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
+	if v := os.Getenv("KFPM_RATINGS_ENDPOINT"); v != "" {
+		out.RatingsURL = v
+	}
 	seenURL := map[string]bool{}
 	add := func(r Repo) {
 		if r.ID == "" || r.URL == "" || disabled[r.ID] || seenURL[r.URL] {

@@ -40,6 +40,8 @@ var cleanSel = {};      // category id -> selected?
 var cleanOpen = false;  // cleanup screen showing
 var cleanError = "";
 var confirmEmpty = false;
+var lastInstalled = ""; // id of the package just installed, to offer "Rate it"
+var detailNote = "";    // one-line message shown inside the details view
 
 function $(id) { return document.getElementById(id); }
 
@@ -298,6 +300,32 @@ function onCleanupResult(eventType, data) {
   });
 }
 
+// Ratings: the page only sends a package id from the catalog and 1-5.
+function startRate(pkg, stars) {
+  if (busy || !(stars >= 1 && stars <= 5) || !ID_RE.test(pkg.id)) return;
+  lastFailure = null;
+  detailNote = "";
+  setBusy({ kind: "rate", id: pkg.id, name: pkg.name, label: "Sending your rating for " + pkg.name });
+  showDetails(pkg);
+  sendKFPM("-R " + pkg.id + " " + stars);
+}
+
+function onRateResult(eventType, data) {
+  if (!busy || busy.kind !== "rate") return;
+  var id = busy.id;
+  var s = typeof data === "string" ? data : "";
+  setBusy(null);
+  if (s.indexOf("sent") !== -1) detailNote = "Thanks! Your rating was sent.";
+  else if (s.indexOf("queued") !== -1) detailNote = "Saved. It will be sent next time you are online.";
+  else detailNote = "Could not save your rating.";
+  lastInstalled = "";
+  loadCatalog(function() {
+    renderAll();
+    var p = findPackage(id);
+    if (p && $("overlay").className !== "hidden") showDetails(p);
+  });
+}
+
 function startSync() {
   if (busy) return;
   lastFailure = null;
@@ -312,7 +340,7 @@ function onOpResult(isUninstall) {
   return function(eventType, data) {
     if (!busy) return;
     var op = busy;
-    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check" || op.kind === "cleanup") return; // they report through their own properties
+    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check" || op.kind === "cleanup" || op.kind === "rate") return; // they report through their own properties
     var isUn = (op.kind === "uninstall");
     if (isUn !== isUninstall) return; // event for the other kind of operation
     var success = typeof data === "string" && data.indexOf("success") !== -1;
@@ -321,6 +349,7 @@ function onOpResult(isUninstall) {
     if (success) {
       notice = PAST[op.kind] + what + ".";
       lastFailure = null;
+      lastInstalled = (op.kind === "install") ? op.id : "";
     } else {
       notice = "Failed:" + (op.kind === "upgrade" ? " update all" : " " + op.kind + what);
       lastFailure = { text: notice };
@@ -456,6 +485,12 @@ function renderBanner() {
     b.setAttribute("data-action", "log");
     box.appendChild(b);
   }
+  if (!busy && !lastFailure && lastInstalled && catalog && catalog.ratingsEnabled && findPackage(lastInstalled)) {
+    var rb = el("button", "", "Rate it");
+    rb.setAttribute("data-action", "details");
+    rb.setAttribute("data-id", lastInstalled);
+    box.appendChild(rb);
+  }
 }
 
 function renderCard(p) {
@@ -468,7 +503,9 @@ function renderCard(p) {
   top.appendChild(el("span", "version", ver));
   card.appendChild(top);
 
-  card.appendChild(el("p", "author", p.author ? "by " + p.author : ""));
+  var byline = p.author ? "by " + p.author : "";
+  if (p.rating) byline += (byline ? "  |  " : "") + "Rating " + p.rating + " / 5 (" + p.ratingCount + ")";
+  card.appendChild(el("p", "author", byline));
 
   if (p.installed) card.appendChild(el("span", "badge inverse", "INSTALLED"));
   if (p.updateAvailable) card.appendChild(el("span", "badge", "UPDATE " + p.version));
@@ -571,6 +608,7 @@ function renderAll() {
 
 function closeOverlay() {
   cleanOpen = false;
+  detailNote = "";
   var o = $("overlay");
   o.className = "hidden";
   clear(o);
@@ -600,6 +638,23 @@ function showDetails(p) {
   o.appendChild(meta);
 
   o.appendChild(el("p", "body", shorten(p.description, 600) || "No description."));
+
+  if (detailNote) o.appendChild(el("div", "cleanmsg", detailNote));
+  if (busy && busy.kind === "rate") {
+    o.appendChild(el("div", "cleanmsg", (busy.label || "Working") + "..."));
+  } else if (catalog && catalog.ratingsEnabled && p.installed) {
+    o.appendChild(el("p", "small", p.rating ? "Rating " + p.rating + " / 5 from " + p.ratingCount + " people. Anonymous." : "Not enough ratings yet. Anonymous."));
+    var rr = el("div", "actions");
+    for (var st = 1; st <= 5; st++) {
+      var rbtn = el("button", p.myRating === st ? "primary" : "", String(st));
+      rbtn.setAttribute("data-action", "rate");
+      rbtn.setAttribute("data-id", p.id);
+      rbtn.setAttribute("data-stars", String(st));
+      rr.appendChild(rbtn);
+    }
+    o.appendChild(el("p", "small", p.myRating ? "Your rating: " + p.myRating + " (tap a number to change it)" : "Rate it, 1 (poor) to 5 (great):"));
+    o.appendChild(rr);
+  }
 
   var actions = el("div", "actions");
   var act = primaryAction(p);
@@ -810,7 +865,10 @@ function onTap(e) {
       startPackageOp(a.value, p);
       break;
     case "details":
-      if (p) showDetails(p);
+      if (p) { detailNote = ""; showDetails(p); }
+      break;
+    case "rate":
+      if (p) startRate(p, parseInt(a.node.getAttribute("data-stars"), 10));
       break;
     case "appupdate":
       if (attr(a.node, "data-close")) closeOverlay();
@@ -886,6 +944,7 @@ document.addEventListener("DOMContentLoaded", function() {
   k.messaging.receiveMessage("appUpdateStatus", onAppUpdateResult);
   k.messaging.receiveMessage("updateCheckStatus", onCheckResult);
   k.messaging.receiveMessage("cleanupStatus", onCleanupResult);
+  k.messaging.receiveMessage("rateStatus", onRateResult);
 
   sendKFPM("-abi");
 
