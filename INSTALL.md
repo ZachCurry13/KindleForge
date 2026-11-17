@@ -4,7 +4,9 @@
 
 ## Requirements
 - A jailbroken Kindle on the latest hotfix.
-- **KPM installed** (it ships with `hdnext` / jb.sh). KindleForge looks for it at `/var/local/kmc/bin/kpm`, then `/mnt/us/kmc/bin/kpm`, then on `PATH`.
+- **A KPM installed.** KindleForge supports two, and detects which one you have:
+  - **KindleModding/KPM** (ships with `hdnext` / jb.sh): `/var/local/kmc/bin/kpm`, data in `/mnt/us/kmc/kpm/`. Full features: versions, dependencies, per-device filtering, Update buttons and Update All. Preferred if both are present.
+  - **gingrspacecadet/kpm** (`kpm -S` / `-R`): `/usr/local/bin/kpm`, data in `/mnt/us/kpm/` (`packages.list`). Its repository is only a list of package names and it tracks no versions, so there are no Update buttons and **Update All is not available**. Descriptions, categories and the list of hidden infrastructure packages (`musl`, `apk`, `make`, ...) come from the GitHub catalog definition (`catalog/config.json`). The footer shows `KPM: gingr`.
 - Wi-Fi for refreshing the package list and installing. Browsing the saved list works offline.
 
 ## Get the files
@@ -68,7 +70,7 @@ Your repo list, cached catalog and installed packages are kept: they live in `/m
 | `/mnt/us/.KFPM/catalog.json` | catalog the UI reads (rewritten by KFPM) |
 | `/mnt/us/.KFPM/cache/` | last good copy of each manifest (offline use) |
 | `/mnt/us/.KFPM/last.log` | output of the most recent operation |
-| `/mnt/us/kmc/kpm/` | KPM's own database and installed packages |
+| `/mnt/us/kmc/kpm/` or `/mnt/us/kpm/` | KPM's own database / installed list and packages (KindleModding / gingrspacecadet) |
 
 ## Adding a repository
 Edit `/mnt/us/.KFPM/repos.json` (your personal file, merged with the GitHub catalog definition) and add another entry under `repos`:
@@ -79,4 +81,6 @@ Edit `/mnt/us/.KFPM/repos.json` (your personal file, merged with the GitHub cata
 
 Optionally add package ids to `categories` (`readers`, `games`, `media`, `utilities`) so they appear under those tabs, or list a catalog repo id under `"disable": [...]` to hide it. Then tap **Refresh**.
 
-To change the catalog for *everyone*, edit `catalog/config.json` in the GitHub repo instead.
+To change the catalog for *everyone*, edit `catalog/config.json` in the GitHub repo instead. It also takes per-package display data (`packages`: name, description, category) and a `hidden` list; your `repos.json` can override these and use `"show": [...]` to un-hide a package.
+
+Custom repositories apply to KindleModding/KPM only. With gingrspacecadet/kpm, packages come from the mirror list in `/etc/kpm/mirrors.conf`.

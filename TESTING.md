@@ -54,6 +54,12 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] **Refresh** offline: banner "Could not reach the repositories. Showing the saved list." and the list stays.
 - [ ] **Custom repo**: add a second manifest URL to `/mnt/us/.KFPM/repos.json` (and entries under `categories`), Refresh, confirm its packages show up and `kpm list-repo` now lists it.
 
+## 5a. gingrspacecadet/kpm devices (`/usr/local/bin/kpm`, `/mnt/us/kpm/packages.list`)
+- [ ] Footer shows `KPM: gingr`; the store lists names with descriptions (no `musl`, `apk`, `make`... entries).
+- [ ] **Install** a small one (e.g. `hello`): banner, then card shows INSTALLED and the id appears in `/mnt/us/kpm/packages.list`. Real `kpm -S` output format is [unverified]; check `last.log` if it fails. (Needs `unzip`, `curl` and a writable `/usr/local`.)
+- [ ] **Uninstall** it: removed from `packages.list`.
+- [ ] Update All reports a clear "not supported" failure (expected).
+
 ## 5b. Updates (needs two published releases; install an older one first)
 - [ ] After Refresh, if a newer release exists, the black **"KindleForge X is available"** banner shows. **What's new** shows the notes.
 - [ ] System menu > **Check for KindleForge Update** reports "up to date" or "available".

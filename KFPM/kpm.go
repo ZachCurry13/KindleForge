@@ -15,14 +15,21 @@ import (
 
 const kpmTimeout = 5 * time.Minute
 
-// runKPM runs `kpm -y <args...>`, appends everything it prints to last.log and
-// (when verbose) mirrors it to stdout. It returns the combined output.
+// runKPM runs `kpm -y <args...>` (KindleModding KPM).
 func runKPM(c Config, verbose bool, args ...string) (string, error) {
+	return runBin(c, verbose, nil, append([]string{"-y"}, args...)...)
+}
+
+// runBin runs c.KPMPath, appends everything it prints to last.log and (when
+// verbose) mirrors it to stdout. env, if non-nil, replaces the environment.
+func runBin(c Config, verbose bool, env []string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), kpmTimeout)
 	defer cancel()
 
-	full := append([]string{"-y"}, args...)
-	cmd := exec.CommandContext(ctx, c.KPMPath, full...)
+	cmd := exec.CommandContext(ctx, c.KPMPath, args...)
+	if env != nil {
+		cmd.Env = env
+	}
 
 	var buf bytes.Buffer
 	var w io.Writer = &buf
@@ -34,7 +41,7 @@ func runKPM(c Config, verbose bool, args ...string) (string, error) {
 
 	err := cmd.Run()
 	out := buf.String()
-	appendLog(c, fmt.Sprintf("$ kpm %s\n%s", strings.Join(full, " "), out))
+	appendLog(c, fmt.Sprintf("$ kpm %s\n%s", strings.Join(args, " "), out))
 
 	if ctx.Err() == context.DeadlineExceeded {
 		return out, fmt.Errorf("kpm %s timed out after %s", args[0], kpmTimeout)
@@ -77,6 +84,9 @@ const installedQuery = "SELECT id, IFNULL(repository,''), IFNULL(name,''), versi
 // required by KindleForge.sh), which avoids a CGO build. If that is not
 // possible it falls back to the package folder names (versions unknown).
 func listInstalled(c Config) map[string]Installed {
+	if isGingr(c) {
+		return gingrInstalled(c)
+	}
 	out := map[string]Installed{}
 
 	if _, err := os.Stat(c.DBPath); err == nil {

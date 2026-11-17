@@ -25,7 +25,22 @@ type Config struct {
 	AppDir      string // KFPM_APP_DIR     : installed KindleForge app folder (self-update target)
 	ReleasesURL string // KFPM_RELEASES_URL: GitHub releases API endpoint
 	ConfigURL   string // KFPM_CONFIG_URL  : remote catalog definition (repos + categories)
+
+	// Which KPM is installed: "modding" (KindleModding/KPM) or "gingr"
+	// (gingrspacecadet/kpm). Empty means modding.
+	Backend     string // KFPM_BACKEND
+	GingrList   string // KFPM_GINGR_LIST   : gingr kpm installed list (packages.list)
+	GingrMirror string // KFPM_GINGR_MIRRORS: gingr kpm mirrors.conf
 }
+
+const (
+	BackendModding = "modding"
+	BackendGingr   = "gingr"
+
+	defaultGingrBin     = "/usr/local/bin/kpm"
+	defaultGingrList    = "/mnt/us/kpm/packages.list"
+	defaultGingrMirrors = "/etc/kpm/mirrors.conf"
+)
 
 const (
 	defaultDataDir = "/mnt/us/.KFPM"
@@ -61,8 +76,55 @@ func loadConfig() Config {
 		ReleasesURL: envOr("KFPM_RELEASES_URL", defaultReleasesURL),
 		ConfigURL:   envOr("KFPM_CONFIG_URL", defaultConfigURL),
 	}
-	c.KPMPath = envOr("KFPM_KPM", findKPM())
+	c.GingrList = envOr("KFPM_GINGR_LIST", defaultGingrList)
+	c.GingrMirror = envOr("KFPM_GINGR_MIRRORS", defaultGingrMirrors)
+	c.Backend = detectBackend()
+	if c.Backend == BackendGingr {
+		c.KPMPath = envOr("KFPM_KPM", findGingrKPM())
+	} else {
+		c.KPMPath = envOr("KFPM_KPM", findKPM())
+	}
 	return c
+}
+
+func isGingr(c Config) bool { return c.Backend == BackendGingr }
+
+func exists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+// detectBackend picks the installed KPM. KindleModding's wins if both are
+// present (richer metadata); gingrspacecadet's is chosen when only its files
+// exist. KFPM_BACKEND forces a choice.
+func detectBackend() string {
+	if v := os.Getenv("KFPM_BACKEND"); v == BackendModding || v == BackendGingr {
+		return v
+	}
+	for _, p := range kpmCandidates {
+		if exists(p) {
+			return BackendModding
+		}
+	}
+	if exists(defaultDB) {
+		return BackendModding
+	}
+	for _, p := range []string{defaultGingrBin, defaultGingrList, "/etc/kpm/kpm.conf"} {
+		if exists(p) {
+			return BackendGingr
+		}
+	}
+	return BackendModding
+}
+
+func findGingrKPM() string {
+	if exists(defaultGingrBin) {
+		return defaultGingrBin
+	}
+	if p, err := exec.LookPath("kpm"); err == nil {
+		return p
+	}
+	return defaultGingrBin
 }
 
 // detectAppDir finds the installed app folder: KFPM lives in <app>/binaries/.
@@ -138,7 +200,22 @@ type ReposFile struct {
 	// User file only: ids of catalog repos to hide.
 	Disable []string `json:"disable,omitempty"`
 
+	// Per-package display data. Needed for KPMs whose repositories carry only
+	// package names (gingrspacecadet/kpm); fills gaps for the others.
+	Packages map[string]PkgMeta `json:"packages,omitempty"`
+	// Package ids to hide from the store (libraries, toolchains, ...).
+	Hidden []string `json:"hidden,omitempty"`
+	// User file only: ids to show even though the catalog hides them.
+	Show []string `json:"show,omitempty"`
+
 	Source string `json:"-"` // where the catalog definition came from
+}
+
+type PkgMeta struct {
+	Name        string `json:"name,omitempty"`
+	Author      string `json:"author,omitempty"`
+	Description string `json:"description,omitempty"`
+	Category    string `json:"category,omitempty"`
 }
 
 func builtinConfig() ReposFile {
@@ -245,7 +322,7 @@ func loadRepos(c Config, online bool) ReposFile {
 		disabled[id] = true
 	}
 
-	out := ReposFile{Source: base.Source, Categories: map[string]string{}}
+	out := ReposFile{Source: base.Source, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
 	seenURL := map[string]bool{}
 	add := func(r Repo) {
 		if r.ID == "" || r.URL == "" || disabled[r.ID] || seenURL[r.URL] {
@@ -265,6 +342,21 @@ func loadRepos(c Config, online bool) ReposFile {
 	}
 	for k, v := range user.Categories {
 		out.Categories[k] = v
+	}
+	for k, v := range base.Packages {
+		out.Packages[k] = v
+	}
+	for k, v := range user.Packages {
+		out.Packages[k] = v
+	}
+	shown := map[string]bool{}
+	for _, id := range user.Show {
+		shown[id] = true
+	}
+	for _, id := range base.Hidden {
+		if !shown[id] {
+			out.Hidden = append(out.Hidden, id)
+		}
 	}
 	return out
 }

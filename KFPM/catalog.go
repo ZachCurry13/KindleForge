@@ -92,6 +92,7 @@ type RepoStatus struct {
 type Catalog struct {
 	GeneratedAt  string       `json:"generatedAt"`
 	ConfigSource string       `json:"configSource"` // github | cache | built-in
+	Backend      string       `json:"backend"`      // modding | gingr
 	Platform     string       `json:"platform"`
 	ABI          string       `json:"abi"`
 	Repos        []RepoStatus `json:"repos"`
@@ -157,7 +158,15 @@ func loadManifest(c Config, r Repo, online bool) (Manifest, string) {
 // ---- building the catalog -------------------------------------------------
 
 func buildCatalog(c Config, rf ReposFile, online bool) Catalog {
+	if isGingr(c) {
+		return buildGingrCatalog(c, rf, online)
+	}
+	hidden := map[string]bool{}
+	for _, id := range rf.Hidden {
+		hidden[id] = true
+	}
 	cat := Catalog{
+		Backend:      BackendModding,
 		GeneratedAt:  time.Now().UTC().Format(time.RFC3339),
 		Platform:     c.Platform,
 		ConfigSource: rf.Source,
@@ -183,6 +192,9 @@ func buildCatalog(c Config, rf ReposFile, online bool) Catalog {
 				continue
 			}
 			seen[id] = true
+			if _, isInst := installed[id]; hidden[id] && !isInst {
+				continue
+			}
 			p := m.Packages[id]
 			cp := CatPackage{
 				ID: id, Name: p.Name, Author: p.Author, Description: p.Description,

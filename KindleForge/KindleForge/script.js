@@ -404,7 +404,8 @@ function renderCard(p) {
 
   var top = el("div", "card-top");
   top.appendChild(el("h2", "title", p.name));
-  var ver = p.installed ? "v" + p.installedVersion : (p.version ? "v" + p.version : "");
+  var shown = p.installed ? p.installedVersion : p.version;
+  var ver = (shown && shown !== "0.0.0") ? "v" + shown : "";
   top.appendChild(el("span", "version", ver));
   card.appendChild(top);
 
@@ -484,6 +485,7 @@ function renderFooter() {
     }
     s = (anyCache && !anyNet ? "Offline list" : "List") + ": " + (catalog.generatedAt || "").substring(0, 10);
     if (catalog.configSource) s += " (" + catalog.configSource + ")";
+    if (catalog.backend) s += " | KPM: " + catalog.backend;
   }
   $("catalog-status").textContent = s;
 }
@@ -523,7 +525,7 @@ function showDetails(p) {
 
   var meta = el("div", "meta");
   meta.appendChild(metaRow("Latest version", p.version || "n/a"));
-  meta.appendChild(metaRow("Installed", p.installed ? p.installedVersion : "no"));
+  meta.appendChild(metaRow("Installed", p.installed ? ((p.installedVersion && p.installedVersion !== "0.0.0") ? p.installedVersion : "yes") : "no"));
   meta.appendChild(metaRow("Repository", p.repo || "local"));
   if (p.category) meta.appendChild(metaRow("Category", p.category));
   if (p.dependencies && p.dependencies.length) meta.appendChild(metaRow("Needs", p.dependencies.join(", ")));

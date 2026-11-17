@@ -17,6 +17,10 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 - DB `/mnt/us/kmc/kpm/kpm.db` (table `installed_packages`), packages in `/mnt/us/kmc/kpm/packages/`. KFPM reads the DB via the `sqlite3` binary.
 - Manifest v2: packages keyed by id; artifacts have `version:[a,b,c]`, `supported_platforms` (`kindlehf`/`kindlepw2`), `dependencies`.
 
+## Two KPMs (auto-detected, `detectBackend` in config.go; force with `KFPM_BACKEND=modding|gingr`)
+- `modding` = KindleModding/KPM (see above), preferred when both exist.
+- `gingr` = gingrspacecadet/kpm, `gingr.go`: `/usr/local/bin/kpm`, `kpm -S/-R/-Ql/-Qr`, installed ids in `/mnt/us/kpm/packages.list`, mirrors in `/etc/kpm/mirrors.conf` (first field = list URL, list = names only). Exit codes are unreliable (it can crash after a good install, and reads `kpm -Ql kpmgui` unchecked), so success is decided by re-reading packages.list and kpm gets an explicit PATH. No versions, so no Update/Update All. Display data comes from `packages`/`hidden`/`categories` in `catalog/config.json`.
+
 ## Updates
 - Catalog definition: `catalog/config.json` in the GitHub repo (repos + categories). KFPM fetches it on Refresh (`-s`), caches it in `cache/config.json`, falls back to built-ins. User `repos.json` merges on top. Code: `config.go`.
 - App self-update (`selfupdate.go`): `-c` checks GitHub releases (pre-releases included), `-A` downloads the zip, requires GitHub's `sha256:` digest, extracts only `KindleForge/` (zip-slip/symlink/size checks), validates `VERSION == tag`, swaps `<app>` <-> `<app>.new` with rollback. Version comes from `KindleForge/KindleForge/VERSION`. Launcher is never updated in-app.
@@ -29,4 +33,4 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 - UI rules: black on white only, no transitions/animations, paginated (PAGE_SIZE=3), ES5, no scrolling lists.
 
 ## Not yet verified on hardware
-self-update swap on a real device (only tested on desktop temp dirs), iframe file:// catalog read (incl. `?t=` cache-buster), real `kpm list-repo` output format, page size on-device, HTTPS CA certs for Go.
+self-update swap on a real device (only tested on desktop temp dirs), gingr backend against the real gingrspacecadet/kpm (only tested with a fake script), iframe file:// catalog read (incl. `?t=` cache-buster), real `kpm list-repo` output format, page size on-device, HTTPS CA certs for Go.

@@ -1,7 +1,7 @@
 # KindleForge 📦
 
 > [!NOTE]
-> **KPM Edition.** A fork of [KindleTweaks/KindleForge](https://github.com/KindleTweaks/KindleForge) by Penguins184. The backend now delegates all package work to the native [KPM](https://github.com/KindleModding/KPM) CLI and reads live KPM repositories (default: [KindleTweaks/Repo](https://kindletweaks.github.io/Repo/manifest.json)), and the UI is rebuilt for e-ink. **Requires KPM on the device** (ships with `hdnext` / jb.sh). **Pre-release: not yet tested on real hardware**, see [TESTING.md](TESTING.md).
+> **KPM Edition.** A fork of [KindleTweaks/KindleForge](https://github.com/KindleTweaks/KindleForge) by Penguins184. The backend now delegates all package work to the native [KPM](https://github.com/KindleModding/KPM) CLI and reads live KPM repositories (default: [KindleTweaks/Repo](https://kindletweaks.github.io/Repo/manifest.json)), and the UI is rebuilt for e-ink. **Requires a KPM on the device**: either [KindleModding/KPM](https://github.com/KindleModding/KPM) (ships with `hdnext` / jb.sh) or [gingrspacecadet/kpm](https://github.com/gingrspacecadet/kpm); KindleForge detects which one is installed. **Pre-release: not yet tested on real hardware**, see [TESTING.md](TESTING.md).
 
 KindleForge is a GUI Appstore for Kindles, allowing you to download & install tweaks & applications such as KOReader directly on-device, without having to keep copying files locally.
 
@@ -31,7 +31,7 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 
 ## Minimum Requirements
 
-- A jailbroken Kindle (AdBreak, WinterBreak, LanguageBreak, ...) with **KPM installed**
+- A jailbroken Kindle (AdBreak, WinterBreak, LanguageBreak, ...) with **a KPM installed** (KindleModding/KPM or gingrspacecadet/kpm)
 - Latest Universal Hotfix
 - Above or on the 5.12.2.2 firmware (4.1.0 adds Chromebar fixes; Application Errors fixed with Hotfix 2.3.7+)
 - Both **hard-float and soft-float** kindles should work, but not all packages may support both architectures.

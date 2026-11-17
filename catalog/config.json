@@ -1,12 +1,83 @@
 {
   "repos": [
-    { "id": "kindletweaks", "url": "https://kindletweaks.github.io/Repo/manifest.json" }
+    {
+      "id": "kindletweaks",
+      "url": "https://kindletweaks.github.io/Repo/manifest.json"
+    }
   ],
   "categories": {
     "kuala": "utilities",
     "gargoyle": "games",
     "kinamp": "media",
     "larkplayer": "media",
-    "ranki": "readers"
-  }
+    "ranki": "readers",
+    "kindlefetch": "utilities",
+    "blockamazon": "utilities",
+    "hyprpad": "utilities",
+    "hello": "utilities",
+    "cmsg": "utilities",
+    "kpmgui": "utilities",
+    "kwordle": "games",
+    "gnomegames": "games",
+    "blackjack": "games",
+    "gambatte": "games",
+    "kanki": "readers"
+  },
+  "packages": {
+    "blockamazon": {
+      "name": "BlockAmazon",
+      "description": "Blocks Amazon services on your Kindle for more privacy and less unwanted connectivity."
+    },
+    "gnomegames": {
+      "name": "GNOME Games",
+      "description": "Classic GNOME games for your Kindle."
+    },
+    "hello": {
+      "name": "Hello",
+      "description": "A simple example package. Useful for testing that KPM works."
+    },
+    "hyprpad": {
+      "name": "Hyprpad",
+      "description": "A simple text editor for creating and editing text files on your Kindle."
+    },
+    "kanki": {
+      "name": "Kanki",
+      "description": "Flashcard app for learning Japanese and other languages."
+    },
+    "kindlefetch": {
+      "name": "KindleFetch",
+      "description": "Download books straight to your Kindle without a computer. Needs KTerm."
+    },
+    "kwordle": {
+      "name": "Kwordle",
+      "description": "A Wordle clone made for Kindle."
+    },
+    "blackjack": {
+      "name": "Blackjack"
+    },
+    "cmsg": {
+      "name": "cmsg"
+    },
+    "kpmgui": {
+      "name": "KPM GUI"
+    },
+    "gambatte": {
+      "name": "Gambatte"
+    }
+  },
+  "hidden": [
+    "kpm",
+    "musl",
+    "apk",
+    "libapk",
+    "libc",
+    "libz",
+    "libssl",
+    "libcrypto",
+    "make",
+    "git",
+    "curl",
+    "kindleforge",
+    "template.kpm"
+  ]
 }

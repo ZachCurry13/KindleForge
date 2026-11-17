@@ -10,6 +10,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -67,6 +68,13 @@ func main() {
 
 	case "-U":
 		resetLog(cfg)
+		if isGingr(cfg) {
+			// gingrspacecadet/kpm tracks no versions, so there is nothing to upgrade.
+			fmt.Println("[KFPM] Update All is not supported by this KPM (it does not track package versions).")
+			appendLog(cfg, "update all: not supported by gingrspacecadet/kpm")
+			setStatus("packageInstallStatus", "failure")
+			os.Exit(1)
+		}
 		if _, err := runKPM(cfg, verbose, "upgrade"); err != nil {
 			fmt.Printf("[KFPM] Upgrade failed: %v (see %s)\n", err, cfg.path("last.log"))
 			refreshCatalog(cfg, false, verbose) // catalog first: the status event triggers a reload
@@ -106,7 +114,7 @@ func main() {
 	case "-abi":
 		abi := detectABI()
 		writeLocalVersion(cfg)
-		fmt.Printf("[KFPM] ABI: %s (platform: %s), app %s\n", abi, cfg.Platform, readAppVersion(cfg))
+		fmt.Printf("[KFPM] ABI: %s (platform: %s), KPM: %s at %s, app %s\n", abi, cfg.Platform, backendName(cfg), cfg.KPMPath, readAppVersion(cfg))
 		setStatus("deviceABI", abi)
 
 	default:
@@ -143,9 +151,13 @@ Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last.log)`)
 // regenerates catalog.json so the frontend sees the new state.
 func change(c Config, action, id, statusProp string, verbose bool) error {
 	resetLog(c)
-	ensureRepos(c, loadRepos(c, false).Repos, verbose)
-
-	_, err := runKPM(c, verbose, action, id)
+	var err error
+	if isGingr(c) {
+		err = gingrPackageOp(c, action, id, verbose)
+	} else {
+		ensureRepos(c, loadRepos(c, false).Repos, verbose)
+		_, err = runKPM(c, verbose, action, id)
+	}
 	status := "success"
 	if err != nil {
 		fmt.Printf("[KFPM] %s of '%s' failed: %v (see %s)\n", action, id, err, c.path("last.log"))
@@ -163,13 +175,16 @@ func change(c Config, action, id, statusProp string, verbose bool) error {
 // and re-downloads the manifests; otherwise it only re-reads local state.
 func refreshCatalog(c Config, sync, verbose bool) error {
 	rf := loadRepos(c, sync)
-	if sync {
+	if sync && !isGingr(c) { // gingrspacecadet/kpm has no repo registry or index to update
 		ensureRepos(c, rf.Repos, verbose)
 		if _, err := runKPM(c, verbose, "update"); err != nil {
 			logf("kpm update failed: %v", err)
 		}
 	}
 	cat := buildCatalog(c, rf, sync)
+	if !sync {
+		keepSyncSources(c, &cat)
+	}
 
 	reachable := false
 	for _, r := range cat.Repos {
@@ -242,4 +257,40 @@ func checkForUpdate(c Config) error {
 		setStatus("updateCheckStatus", "current")
 	}
 	return nil
+}
+
+func backendName(c Config) string {
+	if isGingr(c) {
+		return "gingrspacecadet/kpm"
+	}
+	return "KindleModding/KPM"
+}
+
+// keepSyncSources makes a local rebuild (after an install/uninstall) report
+// where the data came from at the last real sync, not "cache" just because
+// the rebuild itself did not touch the network.
+func keepSyncSources(c Config, cat *Catalog) {
+	data, err := os.ReadFile(c.path("catalog.json"))
+	if err != nil {
+		return
+	}
+	var prev Catalog
+	if json.Unmarshal(data, &prev) != nil {
+		return
+	}
+	if prev.ConfigSource != "" {
+		cat.ConfigSource = prev.ConfigSource
+	}
+	if prev.GeneratedAt != "" {
+		cat.GeneratedAt = prev.GeneratedAt
+	}
+	old := map[string]string{}
+	for _, r := range prev.Repos {
+		old[r.ID] = r.Source
+	}
+	for i, r := range cat.Repos {
+		if src, ok := old[r.ID]; ok && r.Source != "unavailable" && src != "" {
+			cat.Repos[i].Source = src
+		}
+	}
 }
