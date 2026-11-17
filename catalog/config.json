@@ -21,49 +21,100 @@
     "kwordle": "games",
     "gnomegames": "games",
     "blackjack": "games",
-    "gambatte": "games",
     "kanki": "readers"
   },
   "packages": {
     "blockamazon": {
       "name": "BlockAmazon",
-      "description": "Blocks Amazon services on your Kindle for more privacy and less unwanted connectivity."
+      "description": "Blocks Amazon services on your Kindle for more privacy and less unwanted connectivity.",
+      "author": "mitchellurgero",
+      "category": "utilities",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "gnomegames": {
       "name": "GNOME Games",
-      "description": "Classic GNOME games for your Kindle."
+      "description": "Classic GNOME games for your Kindle.",
+      "author": "crazy-electron",
+      "category": "games",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "hello": {
       "name": "Hello",
-      "description": "A simple example package. Useful for testing that KPM works."
+      "description": "A simple example package. Useful for testing that KPM works.",
+      "category": "utilities",
+      "auto": [
+        "category"
+      ]
     },
     "hyprpad": {
       "name": "Hyprpad",
-      "description": "A simple text editor for creating and editing text files on your Kindle."
+      "description": "A simple text editor for creating and editing text files on your Kindle.",
+      "author": "gingrspacecadet",
+      "category": "readers",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "kanki": {
       "name": "Kanki",
-      "description": "Flashcard app for learning Japanese and other languages."
+      "description": "Flashcard app for learning Japanese and other languages.",
+      "author": "crizmo",
+      "category": "readers",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "kindlefetch": {
       "name": "KindleFetch",
-      "description": "Download books straight to your Kindle without a computer. Needs KTerm."
+      "description": "Download books straight to your Kindle without a computer. Needs KTerm.",
+      "category": "readers",
+      "auto": [
+        "category"
+      ]
     },
     "kwordle": {
       "name": "Kwordle",
-      "description": "A Wordle clone made for Kindle."
+      "description": "A Wordle clone made for Kindle.",
+      "author": "crizmo",
+      "category": "games",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "blackjack": {
-      "name": "Blackjack"
+      "name": "Blackjack",
+      "author": "Serialbocks",
+      "description": "A blackjack game for kindle",
+      "category": "games",
+      "auto": [
+        "author",
+        "category",
+        "description"
+      ]
     },
     "cmsg": {
-      "name": "cmsg"
+      "name": "cmsg",
+      "author": "gingrspacecadet",
+      "description": "A command-line messaging tool (chat from the terminal). It has no on-screen app: run it from KTerm.",
+      "category": "utilities",
+      "auto": [
+        "author",
+        "category"
+      ]
     },
     "kpmgui": {
-      "name": "KPM GUI"
-    },
-    "gambatte": {
-      "name": "Gambatte"
+      "name": "KPM GUI",
+      "description": "A KUAL menu for managing KPM packages from the Kindle's launcher.",
+      "category": "utilities"
     }
   },
   "hidden": [
