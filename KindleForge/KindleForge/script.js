@@ -35,6 +35,11 @@ var busyTimer = null;
 var lastFailure = null; // { text } shown with a "View log" button
 var notice = "";        // one-line result of the last operation
 var updateInfo = null;  // parsed update.json: { current, latest, available, notes, ... }
+var cleanup = null;     // parsed cleanup.json (last scan report)
+var cleanSel = {};      // category id -> selected?
+var cleanOpen = false;  // cleanup screen showing
+var cleanError = "";
+var confirmEmpty = false;
 
 function $(id) { return document.getElementById(id); }
 
@@ -63,7 +68,8 @@ function update() {
         "items": [
           { "id": "KFORGE_REFRESH", "state": "enabled", "handling": "notifyApp", "label": "Refresh Packages", "position": 0 },
           { "id": "KFORGE_UPGRADE", "state": "enabled", "handling": "notifyApp", "label": "Update All Packages", "position": 1 },
-          { "id": "KFORGE_CHECKUPDATE", "state": "enabled", "handling": "notifyApp", "label": "Check for KindleForge Update", "position": 2 }
+          { "id": "KFORGE_CHECKUPDATE", "state": "enabled", "handling": "notifyApp", "label": "Check for KindleForge Update", "position": 2 },
+          { "id": "KFORGE_CLEANUP", "state": "enabled", "handling": "notifyApp", "label": "Clean Up Kindle", "position": 3 }
         ],
         "selectionMode": "none",
         "closeOnUse": true
@@ -108,6 +114,7 @@ window.kindle.appmgr.ongo = function() {
     if (id === "KFORGE_REFRESH") startSync();
     else if (id === "KFORGE_UPGRADE") startUpgradeAll();
     else if (id === "KFORGE_CHECKUPDATE") startCheck();
+    else if (id === "KFORGE_CLEANUP") startCleanup("scan", "Scanning your Kindle");
   });
 };
 
@@ -239,6 +246,58 @@ function startCheck() {
   sendKFPM("-c");
 }
 
+// Cleanup: the page only ever sends one of four fixed commands plus category
+// ids from a fixed list; KFPM derives the actual files itself.
+var CLEAN_ID_RE = /^[a-z]{1,20}$/;
+function startCleanup(cmd, label) {
+  if (busy) return;
+  var args = "-k " + cmd;
+  if (cmd === "apply") {
+    var ids = [];
+    for (var k in cleanSel) {
+      if (cleanSel.hasOwnProperty(k) && cleanSel[k] && CLEAN_ID_RE.test(k)) ids.push(k);
+    }
+    if (!ids.length) return;
+    args += " " + ids.join(",");
+  }
+  confirmEmpty = false;
+  cleanError = "";
+  setBusy({ kind: "cleanup", id: "", name: "", label: label });
+  if (cleanOpen) showCleanup(); else renderAll();
+  sendKFPM(args);
+}
+
+function loadCleanup(cb) {
+  readFile("cleanup.json", function(text) {
+    var parsed = null;
+    if (text) {
+      try {
+        parsed = JSON.parse(text);
+        if (!parsed || !parsed.categories) parsed = null;
+      } catch (e) { parsed = null; }
+    }
+    if (parsed) {
+      cleanup = parsed;
+      for (var i = 0; i < parsed.categories.length; i++) {
+        var c = parsed.categories[i];
+        if (cleanSel[c.id] === undefined) cleanSel[c.id] = !!c["default"];
+      }
+    }
+    if (cb) cb(parsed);
+  });
+}
+
+function onCleanupResult(eventType, data) {
+  if (!busy || busy.kind !== "cleanup") return;
+  var success = typeof data === "string" && data.indexOf("success") !== -1;
+  setBusy(null);
+  if (!success) cleanError = "That did not work. Nothing else was changed.";
+  loadCleanup(function(parsed) {
+    if (!parsed && !cleanup) cleanError = "Could not read the scan results.";
+    showCleanup();
+  });
+}
+
 function startSync() {
   if (busy) return;
   lastFailure = null;
@@ -253,7 +312,7 @@ function onOpResult(isUninstall) {
   return function(eventType, data) {
     if (!busy) return;
     var op = busy;
-    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check") return; // they report through their own properties
+    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check" || op.kind === "cleanup") return; // they report through their own properties
     var isUn = (op.kind === "uninstall");
     if (isUn !== isUninstall) return; // event for the other kind of operation
     var success = typeof data === "string" && data.indexOf("success") !== -1;
@@ -385,7 +444,7 @@ function renderBanner() {
   clear(box);
   var text = "";
   if (busy) {
-    text = ING[busy.kind] + (busy.name ? " " + busy.name : "") + "... Please wait.";
+    text = (busy.label || (ING[busy.kind] + (busy.name ? " " + busy.name : ""))) + "... Please wait.";
   } else if (notice) {
     text = notice;
   }
@@ -444,6 +503,14 @@ function renderList() {
 
   if (!catalog) {
     box.appendChild(el("div", "empty", busy && busy.kind === "sync" ? "Fetching the package list..." : "No package list yet. Tap Refresh."));
+  } else if (catalog.packages.length === 0) {
+    var why = "The package list is empty: the last refresh could not reach the repositories. Check Wi-Fi, then tap Refresh.";
+    if (catalog.repos && catalog.repos.length) {
+      var parts = [];
+      for (var ri = 0; ri < catalog.repos.length; ri++) parts.push(catalog.repos[ri].id + ": " + catalog.repos[ri].source);
+      why += " (" + parts.join(", ") + ")";
+    }
+    box.appendChild(el("div", "empty", why));
   } else if (list.length === 0) {
     box.appendChild(el("div", "empty", query ? "Nothing matches “" + query + "”." : "Nothing here."));
   } else {
@@ -503,6 +570,7 @@ function renderAll() {
 /* ------------------------------------------------------------------ */
 
 function closeOverlay() {
+  cleanOpen = false;
   var o = $("overlay");
   o.className = "hidden";
   clear(o);
@@ -584,6 +652,112 @@ function showWhatsNew() {
   o.appendChild(row);
 }
 
+function fmtBytes(n) {
+  if (!n || n < 1) return "0 B";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return Math.round(n / 102.4) / 10 + " KB";
+  if (n < 1073741824) return Math.round(n / 104857.6) / 10 + " MB";
+  return Math.round(n / 107374182.4) / 10 + " GB";
+}
+
+function plural(n, word) { return n + " " + word + (n === 1 ? "" : "s"); }
+
+function cleanResultText(last) {
+  if (!last) return "";
+  var t = "";
+  if (last.action === "trash") t = "Moved " + plural(last.count, "item") + " (" + fmtBytes(last.bytes) + ") to the trash.";
+  else if (last.action === "restore") t = "Restored " + plural(last.count, "item") + ".";
+  else if (last.action === "empty") t = "Permanently deleted " + plural(last.count, "item") + " (" + fmtBytes(last.bytes) + ").";
+  if (last.skipped) t += " " + last.skipped + " skipped" + (last.action === "restore" ? " (the original place is in use)." : ".");
+  if (last.errors && last.errors.length) t += " " + shorten(last.errors[0], 80);
+  return t;
+}
+
+function cleanBtn(label, action, cls, disabled) {
+  var b = el("button", cls || "", label);
+  b.setAttribute("data-action", action);
+  if (disabled) b.disabled = true;
+  return b;
+}
+
+function showCleanup() {
+  cleanOpen = true;
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  o.appendChild(el("h2", "", "Clean up Kindle"));
+
+  if (busy && busy.kind === "cleanup") {
+    o.appendChild(el("div", "empty", (busy.label || "Working") + "... Please wait."));
+    return;
+  }
+  if (!cleanup) {
+    o.appendChild(el("div", "empty", cleanError || "No scan results yet."));
+    var row0 = el("div", "actions");
+    row0.appendChild(cleanBtn("Scan", "cleanup-rescan", "primary"));
+    row0.appendChild(cleanBtn("Back", "cleanup-close"));
+    o.appendChild(row0);
+    return;
+  }
+
+  var meta = el("div", "meta");
+  meta.appendChild(metaRow("Free space", fmtBytes(cleanup.freeBytes)));
+  meta.appendChild(metaRow("In the trash", cleanup.trashItems ? plural(cleanup.trashItems, "item") + " (" + fmtBytes(cleanup.trashBytes) + ")" : "empty"));
+  o.appendChild(meta);
+
+  var msg = cleanError || cleanResultText(cleanup.last);
+  if (msg) o.appendChild(el("div", "cleanmsg", msg));
+
+  var any = false, picked = 0;
+  for (var i = 0; i < cleanup.categories.length; i++) {
+    var c = cleanup.categories[i];
+    if (!c.count) continue;
+    any = true;
+    var on = !!cleanSel[c.id];
+    if (on) picked++;
+    var b = el("button", on ? "primary catbtn" : "catbtn", (on ? "ON   " : "OFF  ") + c.title + " \u2014 " + plural(c.count, "item") + ", " + fmtBytes(c.bytes));
+    b.setAttribute("data-action", "cleanup-toggle");
+    b.setAttribute("data-cat", c.id);
+    o.appendChild(b);
+    o.appendChild(el("p", "small", shorten(c.description, 100)));
+  }
+  if (!any) o.appendChild(el("div", "empty", "Nothing to clean up. Your Kindle is tidy."));
+
+  var r1 = el("div", "actions");
+  r1.appendChild(cleanBtn("Move selected to trash", "cleanup-apply", "primary", picked === 0));
+  r1.appendChild(cleanBtn("Biggest items", "cleanup-biggest"));
+  o.appendChild(r1);
+
+  if (cleanup.trashItems > 0) {
+    var r2 = el("div", "actions");
+    r2.appendChild(cleanBtn("Restore from trash", "cleanup-restore"));
+    r2.appendChild(cleanBtn(confirmEmpty ? "Tap again: delete " + plural(cleanup.trashItems, "item") + " forever" : "Empty trash",
+                            "cleanup-empty", confirmEmpty ? "primary" : ""));
+    o.appendChild(r2);
+  }
+  var r3 = el("div", "actions");
+  r3.appendChild(cleanBtn("Scan again", "cleanup-rescan"));
+  r3.appendChild(cleanBtn("Back", "cleanup-close"));
+  o.appendChild(r3);
+}
+
+function showBiggest() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  o.appendChild(el("h2", "", "Biggest items"));
+  o.appendChild(el("p", "small", "Information only. KindleForge never deletes these."));
+  var list = (cleanup && cleanup.biggest) || [];
+  if (!list.length) o.appendChild(el("div", "empty", "Run a scan first."));
+  for (var i = 0; i < list.length; i++) {
+    var d = el("div", "bigrow");
+    d.appendChild(el("strong", "", list[i].path));
+    d.appendChild(document.createTextNode("  " + (list[i].approx ? "(too slow to measure)" : fmtBytes(list[i].bytes))));
+    o.appendChild(d);
+  }
+  o.appendChild(cleanBtn("Back", "cleanup-back", "primary"));
+}
+
 function showLog() {
   var o = $("overlay");
   clear(o);
@@ -651,6 +825,32 @@ function onTap(e) {
     case "close":
       closeOverlay();
       break;
+    case "cleanup-toggle":
+      var cid = a.node.getAttribute("data-cat");
+      if (CLEAN_ID_RE.test(cid)) { cleanSel[cid] = !cleanSel[cid]; confirmEmpty = false; showCleanup(); }
+      break;
+    case "cleanup-apply":
+      startCleanup("apply", "Moving files to the trash");
+      break;
+    case "cleanup-rescan":
+      startCleanup("scan", "Scanning your Kindle");
+      break;
+    case "cleanup-restore":
+      startCleanup("restore", "Restoring files");
+      break;
+    case "cleanup-empty":
+      if (!confirmEmpty) { confirmEmpty = true; showCleanup(); }
+      else startCleanup("empty", "Deleting the trash");
+      break;
+    case "cleanup-biggest":
+      showBiggest();
+      break;
+    case "cleanup-back":
+      showCleanup();
+      break;
+    case "cleanup-close":
+      closeOverlay();
+      break;
   }
 }
 
@@ -685,6 +885,7 @@ document.addEventListener("DOMContentLoaded", function() {
   k.messaging.receiveMessage("catalogStatus", onSyncResult);
   k.messaging.receiveMessage("appUpdateStatus", onAppUpdateResult);
   k.messaging.receiveMessage("updateCheckStatus", onCheckResult);
+  k.messaging.receiveMessage("cleanupStatus", onCleanupResult);
 
   sendKFPM("-abi");
 

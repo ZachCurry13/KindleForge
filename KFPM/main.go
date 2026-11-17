@@ -89,6 +89,18 @@ func main() {
 		resetLog(cfg)
 		os.Exit(exitCode(refreshCatalog(cfg, true, verbose)))
 
+	case "-k":
+		resetLog(cfg)
+		err := runCleanup(cfg, args[1:])
+		if err != nil {
+			fmt.Printf("[KFPM] Cleanup failed: %v\n", err)
+			appendLog(cfg, "cleanup failed: "+err.Error())
+			setStatus("cleanupStatus", "failure")
+			os.Exit(1)
+		}
+		fmt.Println("[KFPM] Cleanup step done.")
+		setStatus("cleanupStatus", "success")
+
 	case "-c":
 		resetLog(cfg)
 		os.Exit(exitCode(checkForUpdate(cfg)))
@@ -138,6 +150,10 @@ kfpm -u <ID> [-v]    Update a package to the newest version
 kfpm -r <ID> [-v]    Uninstall a package
 kfpm -U [-v]         Upgrade every installed package
 kfpm -s [-v]         Sync: refresh catalog definition + repo manifests, check for app update
+kfpm -k scan         Cleanup: scan the Kindle for removable files (read-only)
+kfpm -k apply a,b    Cleanup: move the chosen categories to the trash (restorable)
+kfpm -k restore      Cleanup: put everything in the trash back
+kfpm -k empty        Cleanup: permanently delete the trash
 kfpm -c              Check GitHub for a newer KindleForge release
 kfpm -A              Download, verify and install the newer KindleForge release
 kfpm -l              List installed packages

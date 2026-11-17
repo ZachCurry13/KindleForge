@@ -61,10 +61,20 @@ Your repo list, cached catalog and installed packages are kept: they live in `/m
 2. Delete `documents/KindleForge/` and `documents/KindleForge.sh` over USB.
 3. Optional cleanup: delete `/mnt/us/.KFPM/` (repo list, cache, logs). The copy in `/var/local/mesquite/KindleForge` and the app registration need a shell to remove; leaving them is harmless, and reinstalling overwrites them.
 
+## Clean up your Kindle
+System menu > **Clean Up Kindle**. KindleForge scans (read-only) and lists what it found, with sizes:
+- **Crash dumps** (`pillowd_*` / `mesquite_*` ... `_crash`), **old KindleForge leftovers** (`KF-Update-Temp`, old `installed.txt`), **Indexer dumps**, **KindleForge test reports** and **download leftovers**: on by default.
+- **Orphaned book data (.sdr)**: reading progress and highlights for books no longer on the Kindle. **Off by default**; removing them loses that data if you re-add the book.
+
+Tap a row to switch it ON/OFF, then **Move selected to trash**. Nothing is deleted yet: items go to `/mnt/us/.KFPM/trash` and **Restore from trash** puts them back (an item whose original place is taken stays in the trash). **Empty trash** (tap twice) is the only permanent delete. **Biggest items** is information only.
+
+It only ever considers its own fixed list of categories; it never takes a path from the screen, never follows links, and never touches your books, `My Clippings`, KOReader, `extensions`, `system` or other folders.
+
 ## Where things live
 | Path | What |
 |---|---|
 | `/mnt/us/.KFPM/repos.json` | **your own** extra repos, category overrides and `disable` list (never overwritten) |
+| `/mnt/us/.KFPM/trash/` | files moved by Clean Up, restorable until you empty the trash |
 | `/mnt/us/.KFPM/update.json` | installed version and any pending KindleForge update |
 | `/mnt/us/.KFPM/cache/config.json` | last good copy of the GitHub catalog definition |
 | `/mnt/us/.KFPM/catalog.json` | catalog the UI reads (rewritten by KFPM) |

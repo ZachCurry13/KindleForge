@@ -21,6 +21,9 @@ GUI app store for jailbroken Kindles. Fork of KindleTweaks/KindleForge, rewritte
 - `modding` = KindleModding/KPM (see above), preferred when both exist.
 - `gingr` = gingrspacecadet/kpm, `gingr.go`: `/usr/local/bin/kpm`, `kpm -S/-R/-Ql/-Qr`, installed ids in `/mnt/us/kpm/packages.list`, mirrors in `/etc/kpm/mirrors.conf` (first field = list URL, list = names only). Exit codes are unreliable (it can crash after a good install, and reads `kpm -Ql kpmgui` unchecked), so success is decided by re-reading packages.list and kpm gets an explicit PATH. No versions, so no Update/Update All. Display data comes from `packages`/`hidden`/`categories` in `catalog/config.json`.
 
+## Cleanup (`cleanup.go`)
+`-k scan|apply <cats>|restore|empty`. Fixed allowlist of categories (crash, oldforge, dumps, diag, kfupdate, orphansdr); apply re-scans and derives paths itself (UI sends only category ids); moves into `<data>/trash` with a manifest; `allowedPath` blocks protected top-level folders, symlinks and anything outside the roots; restore validates manifest paths; only `empty` really deletes. Writes `cleanup.json` (report + `last` result) after every command; status prop `cleanupStatus`. Tests: `cleanup_test.go`.
+
 ## Updates
 - Catalog definition: `catalog/config.json` in the GitHub repo (repos + categories). KFPM fetches it on Refresh (`-s`), caches it in `cache/config.json`, falls back to built-ins. User `repos.json` merges on top. Code: `config.go`.
 - App self-update (`selfupdate.go`): `-c` checks GitHub releases (pre-releases included), `-A` downloads the zip, requires GitHub's `sha256:` digest, extracts only `KindleForge/` (zip-slip/symlink/size checks), validates `VERSION == tag`, swaps `<app>` <-> `<app>.new` with rollback. Version comes from `KindleForge/KindleForge/VERSION`. Launcher is never updated in-app.

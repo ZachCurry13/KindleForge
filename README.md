@@ -22,6 +22,7 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 - Search, category tabs and Install / Update / Uninstall buttons
 - Paginated, high-contrast e-ink UI (no scrolling, no animation)
 - Multiple repositories, with an offline cache. The catalog definition updates from GitHub without a new app release
+- **Clean Up Kindle** (menu): scans for crash dumps and leftovers, you choose what to move to a restorable trash; fixed allowlist, never touches your books
 - In-app self-update from GitHub releases, with checksum verification and rollback
 - Hard-float and soft-float support
 

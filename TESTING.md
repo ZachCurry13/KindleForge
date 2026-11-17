@@ -67,6 +67,11 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
 
+## 5c. Clean Up Kindle
+- [ ] System menu > Clean Up Kindle shows a scan with free space and categories. [unverified on device: `/mnt/us` is a FUSE filesystem; renaming into `.KFPM/trash` should work but check.]
+- [ ] Move one category (e.g. crash dumps) to the trash: the files leave `documents/`; **Restore from trash** puts them back.
+- [ ] Your books, My Clippings and KOReader are untouched.
+
 ## 6. Reinstall behaviour
 - [ ] Re-run `KindleForge.sh` (or use a new release copy): `/mnt/us/.KFPM/` (repos, cache, catalog) survives and installed packages are unaffected.
 

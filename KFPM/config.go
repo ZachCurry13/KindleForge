@@ -26,6 +26,8 @@ type Config struct {
 	ReleasesURL string // KFPM_RELEASES_URL: GitHub releases API endpoint
 	ConfigURL   string // KFPM_CONFIG_URL  : remote catalog definition (repos + categories)
 
+	UserRoot string // KFPM_USER_ROOT: the Kindle's user storage (cleanup scope)
+
 	// Which KPM is installed: "modding" (KindleModding/KPM) or "gingr"
 	// (gingrspacecadet/kpm). Empty means modding.
 	Backend     string // KFPM_BACKEND
@@ -75,6 +77,7 @@ func loadConfig() Config {
 		AppDir:      envOr("KFPM_APP_DIR", detectAppDir()),
 		ReleasesURL: envOr("KFPM_RELEASES_URL", defaultReleasesURL),
 		ConfigURL:   envOr("KFPM_CONFIG_URL", defaultConfigURL),
+		UserRoot:    envOr("KFPM_USER_ROOT", "/mnt/us"),
 	}
 	c.GingrList = envOr("KFPM_GINGR_LIST", defaultGingrList)
 	c.GingrMirror = envOr("KFPM_GINGR_MIRRORS", defaultGingrMirrors)
