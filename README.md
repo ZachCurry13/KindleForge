@@ -14,9 +14,10 @@ KindleForge is a GUI Appstore for Kindles, allowing you to download & install tw
 > [!CAUTION]
 > Ensure you are on the latest hotfix prior to installation! Older hotfixes could potentially cause bricks! As always, jailbreak at your own risk ;) **Hotfixes 2.3.1 and above should work fine.**
 
-1. Grab the latest file from releases
-2. Unzip it, paste both `KindleForge/` and `KindleForge.sh` into the `documents/` folder on your Kindle.
-3. Run the scriptlet, and have fun!
+1. Copy `KindleForge/` and `KindleForge.sh` from the `KindleForge/` folder of this repo into the `documents/` folder on your Kindle (there is no release zip for this fork).
+2. Run the scriptlet, then tap *Refresh* in the app.
+
+Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 
 ## Features
 
