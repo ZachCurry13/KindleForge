@@ -206,6 +206,8 @@ type ReposFile struct {
 	Categories map[string]string `json:"categories"`
 	// Base URL of the ratings endpoint (https). Empty disables rating.
 	RatingsURL string `json:"ratingsURL,omitempty"`
+	// Known apps to look for on the Kindle (see detect.go).
+	Detect []DetectEntry `json:"detect,omitempty"`
 	// Where people go to suggest an app (https), shown by "Suggest an App".
 	SuggestURL string `json:"suggestURL,omitempty"`
 
@@ -334,7 +336,7 @@ func loadRepos(c Config, online bool) ReposFile {
 		disabled[id] = true
 	}
 
-	out := ReposFile{Source: base.Source, RatingsURL: base.RatingsURL, SuggestURL: base.SuggestURL, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
+	out := ReposFile{Source: base.Source, RatingsURL: base.RatingsURL, SuggestURL: base.SuggestURL, Detect: base.Detect, Categories: map[string]string{}, Packages: map[string]PkgMeta{}}
 	if v := os.Getenv("KFPM_RATINGS_ENDPOINT"); v != "" {
 		out.RatingsURL = v
 	}

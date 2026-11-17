@@ -137,5 +137,70 @@
     "kindleforge",
     "template.kpm"
   ],
-  "suggestURL": "https://github.com/ZachCurry13/KindleForge/issues/new?template=suggest-app.yml"
+  "suggestURL": "https://github.com/ZachCurry13/KindleForge/issues/new?template=suggest-app.yml",
+  "detect": [
+    {
+      "id": "koreader",
+      "name": "KOReader",
+      "description": "Document reader for e-ink devices.",
+      "paths": [
+        "koreader/koreader.sh"
+      ],
+      "versionFile": "koreader/git-rev",
+      "versionRegex": "v?(\\d{4}\\.\\d{2}(?:\\.\\d+)?)",
+      "latestGitHub": "koreader/koreader",
+      "note": "KindleForge only tells you when a newer version exists. Update it with KOReader's own updater (in its Tools menu).",
+      "shortNote": "Update it inside KOReader."
+    },
+    {
+      "id": "kuala",
+      "name": "KUALA",
+      "paths": [
+        "kuala/kuala",
+        "documents/kuala.sh"
+      ],
+      "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
+      "shortNote": "Found by hand: tap Details to take over."
+    },
+    {
+      "id": "gargoyle",
+      "name": "Gargoyle",
+      "paths": [
+        "gargoyle",
+        "documents/gargoyle.sh"
+      ],
+      "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
+      "shortNote": "Found by hand: tap Details to take over."
+    },
+    {
+      "id": "kinamp",
+      "name": "KinAMP",
+      "paths": [
+        "KinAMP/KinAMP",
+        "documents/kinamp.sh"
+      ],
+      "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
+      "shortNote": "Found by hand: tap Details to take over."
+    },
+    {
+      "id": "larkplayer",
+      "name": "LARK",
+      "paths": [
+        "LARK/larkplayer",
+        "documents/lark.sh"
+      ],
+      "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
+      "shortNote": "Found by hand: tap Details to take over."
+    },
+    {
+      "id": "ranki",
+      "name": "RAnki",
+      "paths": [
+        "ranki",
+        "documents/ranki.sh"
+      ],
+      "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
+      "shortNote": "Found by hand: tap Details to take over."
+    }
+  ]
 }

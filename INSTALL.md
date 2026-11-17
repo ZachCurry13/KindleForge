@@ -41,6 +41,12 @@ Optional: copy `KindleForge/KFPM-Diag.sh` into `documents/` too. Running it writ
 - **Refresh the list:** the **Refresh** button, or *Refresh Packages* in the system menu.
 - **When something fails:** tap **View log** (in the banner or under Details) to see what KPM printed.
 
+## Apps already on your Kindle
+KindleForge looks for apps it knows about, even ones you installed by hand, and lists them in the **Installed** tab with a **FOUND ON YOUR KINDLE** badge. It only **reads** files to do this.
+- **KOReader:** shown with its version (from `koreader/git-rev`) and, after a Refresh, whether a newer release exists. KindleForge does **not** update KOReader: use KOReader's own updater. It only tells you.
+- **KindleTweaks apps copied over by hand** (KUALA, Gargoyle, KinAMP, LARK, RAnki): their version can't be read, so the card offers **Take over**. Tap it twice: KindleForge installs the store version over your copy, exactly like an update, and from then on tracks its version, so Update and Update All work. The packages' own scripts replace the program files and leave your data (cards, listening history, settings) in place, but back up anything precious first.
+- **What it recognises** is a list in `catalog/config.json` (`detect`), so more apps can be added without an app update. Anything not on the list is simply not shown.
+
 ## Keeping the list fresh
 - **Automatically:** when you open KindleForge and the saved list is more than **24 hours old**, it refreshes by itself (if the Kindle is online). If that attempt fails (for example you are offline) it will not try again for **6 hours**, so opening the app offline is not slow.
 - **By hand:** tap **Refresh** any time.

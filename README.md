@@ -23,6 +23,7 @@ Full instructions, including updating and removing: [INSTALL.md](INSTALL.md).
 - Paginated, high-contrast e-ink UI (no scrolling, no animation)
 - Multiple repositories, with an offline cache. The catalog definition updates from GitHub without a new app release
 - **Both package repositories in one store:** the gingrspacecadet/kpm packages, and the KindleTweaks repository (KUALA, Gargoyle, KinAMP, LARK, RAnki), which KindleForge installs itself, with real version tracking and Update buttons
+- **Sees apps you installed by hand:** KOReader and the KindleTweaks apps are recognised on your Kindle, with their version and whether a newer one exists; hand-copied store apps can be taken over so KindleForge keeps them updated
 - **Always up to date:** the list refreshes by itself when it is more than a day old, and the footer says how old it is
 - **Suggest an app:** anyone can suggest one on GitHub ([how](CONTRIBUTING.md), [what people want](SUGGESTIONS.md)); accepted apps are reviewed by hand and pinned to a checksum
 - **Anonymous ratings:** rate packages you installed (1-5); averages show on the cards once a package has enough votes. See [ratings-worker](ratings-worker/README.md) for what is stored.

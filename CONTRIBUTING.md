@@ -30,6 +30,9 @@ An app can arrive three ways. Only the third needs work from us.
 
 Labels used: `app-suggestion` (added by the form), `accepted`, `added`, `needs-info`, `bug`.
 
+## Teach KindleForge to recognise an app on a Kindle
+Add an entry to `detect` in `catalog/config.json`: `id`, `name`, `paths` (ALL must exist, relative to the Kindle's storage), optionally `versionFile` + `versionRegex` (first capture group is the version) and `latestGitHub` (`owner/repo`, whose newest release counts as the latest version), plus a `note` and a one-line `shortNote`. If the `id` matches a store package, the card offers "Take over"; otherwise the app is listed for information only. Detection only reads files and never leaves the Kindle's storage.
+
 ## Tests
 ```bash
 cd KFPM && go test ./...                      # backend

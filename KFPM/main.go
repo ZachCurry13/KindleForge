@@ -257,6 +257,7 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 		flushPending(c, rf.RatingsURL) // send ratings made while offline
 	}
 	applyRatings(c, rf, loadRatingsFile(c, sync), &cat)
+	applyDetected(c, rf, sync, &cat)
 	if strings.HasPrefix(rf.SuggestURL, "https://") {
 		cat.SuggestURL = rf.SuggestURL
 	}

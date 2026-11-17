@@ -84,6 +84,10 @@ type CatPackage struct {
 	Rating           float64  `json:"rating,omitempty"` // average, only once enough votes exist
 	RatingCount      int      `json:"ratingCount,omitempty"`
 	MyRating         int      `json:"myRating,omitempty"`
+	Detected         bool     `json:"detected,omitempty"` // found on the Kindle, not installed by KindleForge
+	ReadOnly         bool     `json:"readOnly,omitempty"` // shown for information; no install/remove buttons
+	Note             string   `json:"note,omitempty"`
+	ShortNote        string   `json:"shortNote,omitempty"`
 }
 
 type RepoStatus struct {

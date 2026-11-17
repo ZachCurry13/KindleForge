@@ -45,6 +45,7 @@ var cleanError = "";
 var confirmEmpty = false;
 var lastInstalled = ""; // id of the package just installed, to offer "Rate it"
 var detailNote = "";    // one-line message shown inside the details view
+var confirmTake = "";   // id of a package whose "Take over" awaits a second tap
 
 function $(id) { return document.getElementById(id); }
 
@@ -420,7 +421,7 @@ function matchesQuery(p) {
 
 function matchesTab(p) {
   if (tab === "all") return true;
-  if (tab === "installed") return p.installed;
+  if (tab === "installed") return p.installed || p.detected;
   return p.category === tab;
 }
 
@@ -458,6 +459,12 @@ function shorten(s, n) {
 
 // The one "smart" action a package offers right now.
 function primaryAction(p) {
+  if (p.readOnly) return null; // shown for information only (e.g. KOReader)
+  if (p.detected && !p.installed) {
+    var sure = confirmTake === p.id;
+    return { kind: "install", takeover: true,
+             label: sure ? "Tap again: replace your copy with v" + p.version : "Take over (install v" + p.version + ")" };
+  }
   if (!p.installed) return { kind: "install", label: "Install" };
   if (p.updateAvailable) return { kind: "update", label: "Update to " + p.version };
   return { kind: "uninstall", label: "Uninstall" };
@@ -504,15 +511,16 @@ function renderCard(p) {
   var top = el("div", "card-top");
   top.appendChild(el("h2", "title", p.name));
   var shown = p.installed ? p.installedVersion : p.version;
-  var ver = (shown && shown !== "0.0.0") ? "v" + shown : "";
+  var ver = (shown && shown !== "0.0.0") ? "v" + shown : (p.detected && p.installed ? "version unknown" : "");
   top.appendChild(el("span", "version", ver));
   card.appendChild(top);
 
-  var byline = p.author ? "by " + p.author : "";
+  var byline = p.author ? "by " + p.author : (p.shortNote || "");
   if (p.rating) byline += (byline ? "  |  " : "") + "Rating " + p.rating + " / 5 (" + p.ratingCount + ")";
   card.appendChild(el("p", "author", byline));
 
-  if (p.installed) card.appendChild(el("span", "badge inverse", "INSTALLED"));
+  if (p.detected) card.appendChild(el("span", "badge inverse", "FOUND ON YOUR KINDLE"));
+  else if (p.installed) card.appendChild(el("span", "badge inverse", "INSTALLED"));
   if (p.updateAvailable) card.appendChild(el("span", "badge", "UPDATE " + p.version));
   if (!p.supported) card.appendChild(el("span", "badge", "NOT AVAILABLE FOR THIS DEVICE"));
 
@@ -520,11 +528,14 @@ function renderCard(p) {
 
   var actions = el("div", "actions");
   var act = primaryAction(p);
-  var main = el("button", act.kind === "uninstall" ? "" : "primary", act.label);
-  main.setAttribute("data-action", act.kind);
-  main.setAttribute("data-id", p.id);
-  if (!p.supported && !p.installed) main.disabled = true;
-  actions.appendChild(main);
+  if (act) {
+    var main = el("button", act.kind === "uninstall" ? "" : "primary", act.label);
+    main.setAttribute("data-action", act.kind);
+    main.setAttribute("data-id", p.id);
+    if (act.takeover) main.setAttribute("data-takeover", "1");
+    if (!p.supported && !p.installed) main.disabled = true;
+    actions.appendChild(main);
+  }
 
   var more = el("button", "", "Details");
   more.setAttribute("data-action", "details");
@@ -670,7 +681,8 @@ function showDetails(p) {
 
   var meta = el("div", "meta");
   meta.appendChild(metaRow("Latest version", p.version || "n/a"));
-  meta.appendChild(metaRow("Installed", p.installed ? ((p.installedVersion && p.installedVersion !== "0.0.0") ? p.installedVersion : "yes") : "no"));
+  var hasVer = p.installedVersion && p.installedVersion !== "0.0.0";
+  meta.appendChild(metaRow("Installed", p.detected ? (p.installed && hasVer ? p.installedVersion + " (found on your Kindle)" : "found on your Kindle, version unknown") : (p.installed ? (hasVer ? p.installedVersion : "yes") : "no")));
   meta.appendChild(metaRow("Repository", p.repo || "local"));
   if (p.category) meta.appendChild(metaRow("Category", p.category));
   if (p.dependencies && p.dependencies.length) meta.appendChild(metaRow("Needs", p.dependencies.join(", ")));
@@ -678,10 +690,11 @@ function showDetails(p) {
 
   o.appendChild(el("p", "body", shorten(p.description, 600) || "No description."));
 
+  if (p.note) o.appendChild(el("p", "body", shorten(p.note, 300)));
   if (detailNote) o.appendChild(el("div", "cleanmsg", detailNote));
   if (busy && busy.kind === "rate") {
     o.appendChild(el("div", "cleanmsg", (busy.label || "Working") + "..."));
-  } else if (catalog && catalog.ratingsEnabled && p.installed) {
+  } else if (catalog && catalog.ratingsEnabled && p.installed && !p.readOnly && !p.detected) {
     o.appendChild(el("p", "small", p.rating ? "Rating " + p.rating + " / 5 from " + p.ratingCount + " people. Anonymous." : "Not enough ratings yet. Anonymous."));
     var rr = el("div", "actions");
     for (var st = 1; st <= 5; st++) {
@@ -697,21 +710,24 @@ function showDetails(p) {
 
   var actions = el("div", "actions");
   var act = primaryAction(p);
-  var main = el("button", act.kind === "uninstall" ? "" : "primary", act.label);
-  main.setAttribute("data-action", act.kind);
-  main.setAttribute("data-id", p.id);
-  main.setAttribute("data-close", "1");
-  if (!p.supported && !p.installed) main.disabled = true;
-  actions.appendChild(main);
+  var main = null;
+  if (act) {
+    main = el("button", act.kind === "uninstall" ? "" : "primary", act.label);
+    main.setAttribute("data-action", act.kind);
+    main.setAttribute("data-id", p.id);
+    if (act.takeover) main.setAttribute("data-takeover", "1"); else main.setAttribute("data-close", "1");
+    if (!p.supported && !p.installed) main.disabled = true;
+    actions.appendChild(main);
+  }
 
-  if (p.installed && p.updateAvailable) { // update is primary; still allow removing
+  if (p.installed && p.updateAvailable && !p.readOnly) { // update is primary; still allow removing
     var rm = el("button", "", "Uninstall");
     rm.setAttribute("data-action", "uninstall");
     rm.setAttribute("data-id", p.id);
     rm.setAttribute("data-close", "1");
     actions.appendChild(rm);
   }
-  o.appendChild(actions);
+  if (main) o.appendChild(actions);
 
   var row = el("div", "actions");
   var log = el("button", "", "View log");
@@ -904,7 +920,7 @@ function attr(node, name) {
 function onTap(e) {
   var t = attr(e.target, "data-tab");
   if (t) {
-    tab = t.value; page = 0;
+    tab = t.value; page = 0; confirmTake = "";
     renderAll();
     return;
   }
@@ -918,11 +934,17 @@ function onTap(e) {
     case "update":
     case "uninstall":
       if (!p) return;
-      if (attr(a.node, "data-close")) closeOverlay();
+      if (attr(a.node, "data-takeover") && confirmTake !== p.id) { // replacing a hand-made copy: ask twice
+        confirmTake = p.id;
+        if ($("overlay").className !== "hidden") showDetails(p); else renderList();
+        return;
+      }
+      confirmTake = "";
+      if ($("overlay").className !== "hidden") closeOverlay();
       startPackageOp(a.value, p);
       break;
     case "details":
-      if (p) { detailNote = ""; showDetails(p); }
+      if (p) { detailNote = ""; confirmTake = ""; showDetails(p); }
       break;
     case "rate":
       if (p) startRate(p, parseInt(a.node.getAttribute("data-stars"), 10));
