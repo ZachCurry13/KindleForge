@@ -67,6 +67,11 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
 
+## 5g. Apps already on the Kindle
+- [ ] After Refresh, the Installed tab lists KOReader with a FOUND ON YOUR KINDLE badge and its version. [unverified on device: `koreader/git-rev` exists in current KOReader builds, as in the release zips]
+- [ ] If a newer KOReader exists the card says UPDATE x and offers no install button.
+- [ ] A hand-copied KindleTweaks app (e.g. KUALA) shows "Take over"; two taps install the store version, then it shows INSTALLED with a version.
+
 ## 5f. Fresh list, suggestions
 - [ ] Open the app after the list is >24h old (or delete `syncedAt` from `.KFPM/catalog.json`): it refreshes by itself once, and the footer says "List updated just now".
 - [ ] Offline and stale: it tries once, fails, and does not retry on the next open within 6 hours; the footer keeps showing the true age.
