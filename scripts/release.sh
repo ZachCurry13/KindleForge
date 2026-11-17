@@ -17,8 +17,8 @@ echo "Building KFPM $VERSION (linux/arm)..."
 if command -v upx >/dev/null 2>&1; then upx --best --lzma -q KindleForge/KindleForge/binaries/KFPM >/dev/null; fi
 
 cp -r KindleForge/KindleForge "$STAGE/KindleForge"
-cp KindleForge/KindleForge.sh KindleForge/KFPM-Diag.sh INSTALL.md TESTING.md LICENSE "$STAGE/"
+cp KindleForge/KindleForge.sh KindleForge/KFPM-Diag.sh KindleForge/KFPM-Net.sh INSTALL.md TESTING.md LICENSE "$STAGE/"
 mkdir -p dist && rm -f "$OUT"
-(cd "$STAGE" && python3 -m zipfile -c "$OLDPWD/$OUT" KindleForge KindleForge.sh KFPM-Diag.sh INSTALL.md TESTING.md LICENSE)
+(cd "$STAGE" && python3 -m zipfile -c "$OLDPWD/$OUT" KindleForge KindleForge.sh KFPM-Diag.sh KFPM-Net.sh INSTALL.md TESTING.md LICENSE)
 echo "$OUT"
 sha256sum "$OUT"
