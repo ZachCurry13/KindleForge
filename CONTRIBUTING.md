@@ -30,6 +30,14 @@ An app can arrive three ways. Only the third needs work from us.
 
 Labels used: `app-suggestion` (added by the form), `accepted`, `added`, `needs-info`, `bug`.
 
+## Offer another repository
+The weekly *Discover sources* job writes [DISCOVERED.md](DISCOVERED.md). To offer a repository to everyone (switched **off** by default, with a warning when a user turns it on):
+1. Read its packages. Check they install and uninstall cleanly and do what they say. For KPM repositories, `KFPM_LIVE=1 go test -run LiveDirectoryKPM` downloads and unpacks every package (it never runs a script).
+2. `scripts/promote_source.py <id> --note "One honest line about it."`
+3. Commit `catalog/config.json`. Users get it on their next Refresh.
+
+A repository you would put on by default (trust *reviewed*) belongs in `repos`, not `sources`, and should have been read line by line. Individual people can always add any repository themselves from **Sources and Repositories**.
+
 ## Teach KindleForge to recognise an app on a Kindle
 Add an entry to `detect` in `catalog/config.json`: `id`, `name`, `paths` (ALL must exist, relative to the Kindle's storage), optionally `versionFile` + `versionRegex` (first capture group is the version) and `latestGitHub` (`owner/repo`, whose newest release counts as the latest version), plus a `note` and a one-line `shortNote`. If the `id` matches a store package, the card offers "Take over"; otherwise the app is listed for information only. Detection only reads files and never leaves the Kindle's storage.
 
@@ -40,5 +48,7 @@ cd ratings-worker && npm test                 # ratings endpoint
 python3 scripts/test_sync_packages.py         # package info sync
 python3 scripts/test_add_app.py               # adding reviewed apps
 python3 scripts/test_pull_suggestions.py      # wishlist
+python3 scripts/test_discover.py              # source discovery and promotion
+KFPM_LIVE=1 go test -run Live ./...           # real downloads, unpacked only; nothing is executed (optional)
 ```
 Never run third-party install scripts on a development machine to "see what happens": read them.

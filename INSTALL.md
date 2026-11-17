@@ -41,11 +41,24 @@ Optional: copy `KindleForge/KFPM-Diag.sh` into `documents/` too. Running it writ
 - **Refresh the list:** the **Refresh** button, or *Refresh Packages* in the system menu.
 - **When something fails:** tap **View log** (in the banner or under Details) to see what KPM printed.
 
+## Sources and repositories
+System menu > **Sources and Repositories** lists every repository KindleForge can read, with how much to trust it:
+- **REVIEWED**: on by default. A person has looked at it.
+- **COMMUNITY: NOT REVIEWED**: listed so you can find it, **off** until you turn it on (tap twice, after a warning). Their packages run other people's code on your Kindle.
+- **ADDED BY YOU**: repositories you add with **Add a repository**. Type the address of the repository's `manifest.json` (it must start with `https://`); KindleForge fetches it, shows what it found (name, kind, number of packages) and only adds it after you confirm. You can turn it off or remove it later.
+
+Two kinds of repository are understood:
+- **KPM repositories** (KindleModding/KindleTweaks style): packages with install scripts, handled as described under "Two package sources".
+- **ZenPM-style repositories** (for example the ZenPM plugin repository, about 250 KOReader plugins): only **KOReader plugins** are offered, and only if KOReader is on your Kindle. Each plugin's download must be a GitHub release file whose **SHA-256 matches** the one the repository publishes; it is then unpacked into `koreader/plugins/` and nothing else is touched, and no script is run. A plugin whose zip does not hold exactly one `<name>.koplugin` folder is refused. **Restart KOReader** after installing, updating or removing a plugin. A plugin already in KOReader that KindleForge did not install is never replaced.
+
 ## Apps already on your Kindle
 KindleForge looks for apps it knows about, even ones you installed by hand, and lists them in the **Installed** tab with a **FOUND ON YOUR KINDLE** badge. It only **reads** files to do this.
 - **KOReader:** shown with its version (from `koreader/git-rev`) and, after a Refresh, whether a newer release exists. KindleForge does **not** update KOReader: use KOReader's own updater. It only tells you.
 - **KindleTweaks apps copied over by hand** (KUALA, Gargoyle, KinAMP, LARK, RAnki): their version can't be read, so the card offers **Take over**. Tap it twice: KindleForge installs the store version over your copy, exactly like an update, and from then on tracks its version, so Update and Update All work. The packages' own scripts replace the program files and leave your data (cards, listening history, settings) in place, but back up anything precious first.
 - **What it recognises** is a list in `catalog/config.json` (`detect`), so more apps can be added without an app update. Anything not on the list is simply not shown.
+
+## Finding more sources (for maintainers)
+A weekly job lists repositories and apps worth a look in [DISCOVERED.md](DISCOVERED.md). To offer one in the directory, run `scripts/promote_source.py <id>`: it is added **off by default**. See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/RESOURCES.md](docs/RESOURCES.md).
 
 ## Keeping the list fresh
 - **Automatically:** when you open KindleForge and the saved list is more than **24 hours old**, it refreshes by itself (if the Kindle is online). If that attempt fails (for example you are offline) it will not try again for **6 hours**, so opening the app offline is not slow.

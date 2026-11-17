@@ -105,6 +105,7 @@ type Catalog struct {
 	Backend        string       `json:"backend"`      // modding | gingr
 	RatingsEnabled bool         `json:"ratingsEnabled"`
 	SuggestURL     string       `json:"suggestURL,omitempty"`
+	Sources        []SourceInfo `json:"sources,omitempty"`
 	Platform       string       `json:"platform"`
 	ABI            string       `json:"abi"`
 	Repos          []RepoStatus `json:"repos"`
@@ -189,6 +190,9 @@ func buildCatalog(c Config, rf ReposFile, online bool) Catalog {
 	seen := map[string]bool{} // first repo listed wins on duplicate ids
 
 	for _, r := range rf.Repos {
+		if r.Format == "zen" {
+			continue // read by zen.go
+		}
 		m, src := loadManifest(c, r, online)
 		cat.Repos = append(cat.Repos, RepoStatus{ID: r.ID, URL: r.URL, Source: src, Packages: len(m.Packages)})
 

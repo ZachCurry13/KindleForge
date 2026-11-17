@@ -193,7 +193,8 @@ func ensureRepos(c Config, repos []Repo, verbose bool) {
 		return
 	}
 	for _, r := range repos {
-		if strings.Contains(out, r.URL) {
+		if r.Format == "zen" || strings.Contains(out, r.URL) { // zen repos are read by KFPM itself
+
 			continue
 		}
 		if _, err := runKPM(c, verbose, "add-repo", r.URL); err != nil {

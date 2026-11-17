@@ -73,7 +73,13 @@ func main() {
 		if isGingr(cfg) {
 			// gingrspacecadet/kpm tracks no versions, so only packages KFPM
 			// installed itself (from KindleModding-style repos) can be updated.
-			n, err := kpkgUpgradeAll(cfg, loadRepos(cfg, false), verbose)
+			rfU := loadRepos(cfg, false)
+			n, err := kpkgUpgradeAll(cfg, rfU, verbose)
+			if zn, zerr := zenUpgradeAll(cfg, rfU, verbose); zerr != nil && err == nil {
+				err = zerr
+			} else {
+				n += zn
+			}
 			if err != nil {
 				fmt.Printf("[KFPM] Update failed: %v (see %s)\n", err, cfg.path("last-log.txt"))
 				appendLog(cfg, "update all failed: "+err.Error())
@@ -127,6 +133,16 @@ func main() {
 		if err != nil {
 			os.Exit(1)
 		}
+
+	case "-g":
+		resetLog(cfg)
+		if err := runSources(cfg, args[1:], verbose); err != nil {
+			fmt.Printf("[KFPM] Sources: %v\n", err)
+			appendLog(cfg, "sources: "+err.Error())
+			setStatus("sourcesStatus", "failure")
+			os.Exit(1)
+		}
+		setStatus("sourcesStatus", "success")
 
 	case "-k":
 		resetLog(cfg)
@@ -190,6 +206,7 @@ kfpm -r <ID> [-v]    Uninstall a package
 kfpm -U [-v]         Upgrade every installed package
 kfpm -s [-v]         Sync: refresh catalog definition + repo manifests, check for app update
 kfpm -R <ID> <1-5>   Rate an installed package (sent anonymously; queued if offline)
+kfpm -g <cmd>        Sources: list | enable <id> | disable <id> | remove <id> | check <url> | add <url>
 kfpm -k scan         Cleanup: scan the Kindle for removable files (read-only)
 kfpm -k apply a,b    Cleanup: move the chosen categories to the trash (restorable)
 kfpm -k restore      Cleanup: put everything in the trash back
@@ -208,7 +225,17 @@ Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last-log.txt)`
 func change(c Config, action, id, statusProp string, verbose bool) error {
 	resetLog(c)
 	var err error
-	if isGingr(c) {
+	rfAll := loadRepos(c, false)
+	zsrcs, _ := zenSources(c, rfAll, false)
+	_, zenOffered := zsrcs[id]
+	zenRec := loadKpkgInstalled(c)[id].Kind == "zen"
+	if (action == "install" && zenOffered) || (action == "uninstall" && zenRec) {
+		if action == "install" {
+			err = zenInstall(c, rfAll, id, verbose)
+		} else {
+			err = zenUninstall(c, id)
+		}
+	} else if isGingr(c) {
 		rf := loadRepos(c, false)
 		srcs, _ := kpkgSources(c, rf, false)
 		_, offered := srcs[id]
@@ -258,6 +285,8 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 	}
 	applyRatings(c, rf, loadRatingsFile(c, sync), &cat)
 	applyDetected(c, rf, sync, &cat)
+	applyZen(c, rf, sync, &cat)
+	annotateSources(rf, &cat)
 	if strings.HasPrefix(rf.SuggestURL, "https://") {
 		cat.SuggestURL = rf.SuggestURL
 	}

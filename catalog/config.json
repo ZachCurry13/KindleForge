@@ -202,5 +202,43 @@
       "note": "Found on your Kindle, installed by hand. \"Take over\" installs the store version over your copy, like an update, so KindleForge can keep it up to date.",
       "shortNote": "Found by hand: tap Details to take over."
     }
+  ],
+  "sources": [
+    {
+      "id": "zenlabs",
+      "name": "ZenPM plugin repository",
+      "format": "zen",
+      "trust": "community",
+      "url": "https://repo.zen-labs.org/manifest.json",
+      "homepage": "https://github.com/xZenLabs/zen-pm",
+      "note": "About 250 KOReader plugins mirrored from their authors' GitHub releases. Needs KOReader. Downloads are checksum-checked, but the plugins themselves are not reviewed."
+    },
+    {
+      "id": "dropbear-ssh",
+      "name": "Dropbear SSH",
+      "format": "kpm",
+      "trust": "community",
+      "url": "https://raw.githubusercontent.com/akshaylahudkar/dropbear-ssh/main/manifest.json",
+      "homepage": "https://github.com/akshaylahudkar/dropbear-ssh",
+      "note": "One package: SSH and SFTP over Wi-Fi. A single developer's repository; it opens a network service on your Kindle. Not reviewed."
+    },
+    {
+      "id": "koreader-tategumi",
+      "name": "KOReader Tategumi",
+      "format": "kpm",
+      "trust": "community",
+      "url": "https://raw.githubusercontent.com/aminztw/koreader-tategumi-backup/main/kpm/manifest.json",
+      "homepage": "https://github.com/aminztw/koreader-tategumi-backup",
+      "note": "KOReader builds for vertical Japanese text (stable and nightly). Not reviewed."
+    },
+    {
+      "id": "mkulik-koreader",
+      "name": "KOReader (mkulik fork)",
+      "format": "kpm",
+      "trust": "community",
+      "url": "https://raw.githubusercontent.com/michalkulik/kpm-koreader/main/manifest.json",
+      "homepage": "https://github.com/michalkulik/kpm-koreader",
+      "note": "A KOReader fork with a cover grid and shelf sync. It is a whole alternative KOReader build. Not reviewed."
+    }
   ]
 }

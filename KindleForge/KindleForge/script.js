@@ -46,6 +46,13 @@ var confirmEmpty = false;
 var lastInstalled = ""; // id of the package just installed, to offer "Rate it"
 var detailNote = "";    // one-line message shown inside the details view
 var confirmTake = "";   // id of a package whose "Take over" awaits a second tap
+var sourcesPage = 0;    // Sources screen: current page
+var confirmSource = ""; // id of a source whose "Turn on" awaits a second tap
+var srcUrl = "";        // address typed on the Add a repository screen
+var srcPreview = null;  // result of checking that address (source-preview.json)
+var sourcesMode = "";   // which sources command is running
+var confirmAdd = false; // "Add it" awaits a second tap
+var SRC_URL_RE = /^https:\/\/[A-Za-z0-9:\/._~%+-]{4,280}$/; // also what the shell command may contain
 
 function $(id) { return document.getElementById(id); }
 
@@ -76,7 +83,8 @@ function update() {
           { "id": "KFORGE_UPGRADE", "state": "enabled", "handling": "notifyApp", "label": "Update All Packages", "position": 1 },
           { "id": "KFORGE_CHECKUPDATE", "state": "enabled", "handling": "notifyApp", "label": "Check for KindleForge Update", "position": 2 },
           { "id": "KFORGE_CLEANUP", "state": "enabled", "handling": "notifyApp", "label": "Clean Up Kindle", "position": 3 },
-          { "id": "KFORGE_SUGGEST", "state": "enabled", "handling": "notifyApp", "label": "Suggest an App", "position": 4 }
+          { "id": "KFORGE_SUGGEST", "state": "enabled", "handling": "notifyApp", "label": "Suggest an App", "position": 4 },
+          { "id": "KFORGE_SOURCES", "state": "enabled", "handling": "notifyApp", "label": "Sources and Repositories", "position": 5 }
         ],
         "selectionMode": "none",
         "closeOnUse": true
@@ -123,6 +131,7 @@ window.kindle.appmgr.ongo = function() {
     else if (id === "KFORGE_CHECKUPDATE") startCheck();
     else if (id === "KFORGE_CLEANUP") startCleanup("scan", "Scanning your Kindle");
     else if (id === "KFORGE_SUGGEST") showSuggest();
+    else if (id === "KFORGE_SOURCES") { sourcesPage = 0; confirmSource = ""; showSources(); }
   });
 };
 
@@ -346,7 +355,7 @@ function onOpResult(isUninstall) {
   return function(eventType, data) {
     if (!busy) return;
     var op = busy;
-    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check" || op.kind === "cleanup" || op.kind === "rate") return; // they report through their own properties
+    if (op.kind === "sync" || op.kind === "appupdate" || op.kind === "check" || op.kind === "cleanup" || op.kind === "rate" || op.kind === "sources") return; // they report through their own properties
     var isUn = (op.kind === "uninstall");
     if (isUn !== isUninstall) return; // event for the other kind of operation
     var success = typeof data === "string" && data.indexOf("success") !== -1;
@@ -851,6 +860,151 @@ function showCleanup() {
   o.appendChild(r3);
 }
 
+// ---- Sources: which repositories packages come from ---------------------------
+
+var TRUST_LABEL = { reviewed: "REVIEWED", community: "COMMUNITY: NOT REVIEWED", yours: "ADDED BY YOU" };
+
+function startSources(cmd, arg, label) {
+  if (busy) return;
+  if (cmd === "check" || cmd === "add") { if (!SRC_URL_RE.test(arg)) return; }
+  else if (!ID_RE.test(arg)) return;
+  sourcesMode = cmd;
+  confirmSource = ""; confirmAdd = false;
+  setBusy({ kind: "sources", id: "", name: "", label: label });
+  showSourcesBusy();
+  sendKFPM("-g " + cmd + " " + arg);
+}
+
+function showSourcesBusy() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  o.appendChild(el("h2", "", "Sources"));
+  o.appendChild(el("div", "empty", (busy && busy.label ? busy.label : "Working") + "... Please wait."));
+}
+
+function loadPreview(cb) {
+  readFile("source-preview.json", function(text) {
+    var p = null;
+    if (text) { try { p = JSON.parse(text); } catch (e) { p = null; } }
+    srcPreview = p;
+    if (cb) cb(p);
+  });
+}
+
+function onSourcesResult(eventType, data) {
+  if (!busy || busy.kind !== "sources") return;
+  var success = typeof data === "string" && data.indexOf("success") !== -1;
+  var mode = sourcesMode;
+  setBusy(null);
+  if (mode === "check" || (mode === "add" && !success)) {
+    loadPreview(function() { showAddSource(); });
+    return;
+  }
+  if (mode === "add" && success) { srcUrl = ""; srcPreview = null; }
+  loadCatalog(function() { renderAll(); showSources(); });
+}
+
+function showSources() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  if (busy && busy.kind === "sources") { showSourcesBusy(); return; }
+  o.appendChild(el("h2", "", "Sources"));
+  o.appendChild(el("p", "small", "Reviewed sources are on. Community sources and ones you add run other people's code on your Kindle: switch them on only if you trust them."));
+
+  var list = (catalog && catalog.sources) || [];
+  var PER = 3, pages = Math.max(1, Math.ceil(list.length / PER));
+  if (sourcesPage >= pages) sourcesPage = pages - 1;
+  for (var i = sourcesPage * PER; i < list.length && i < sourcesPage * PER + PER; i++) {
+    var s = list[i];
+    var card = el("article", "card");
+    var top = el("div", "card-top");
+    top.appendChild(el("h2", "title", s.name));
+    top.appendChild(el("span", "version", s.enabled ? "ON" : "OFF"));
+    card.appendChild(top);
+    var line = (TRUST_LABEL[s.trust] || s.trust) + " | " + (s.format === "zen" ? "KOReader plugins" : "KPM packages");
+    if (s.enabled && s.packages) line += " | " + s.packages + (s.fetched === "cache" ? " (saved copy)" : "");
+    card.appendChild(el("p", "author", line));
+    if (s.note) card.appendChild(el("p", "small", shorten(s.note, 110)));
+    var row = el("div", "actions");
+    var sure = confirmSource === s.id;
+    var tog = el("button", s.enabled ? "" : "primary", s.enabled ? "Turn off" : (sure ? "Tap again: turn on (not reviewed)" : "Turn on"));
+    tog.setAttribute("data-action", "source-toggle");
+    tog.setAttribute("data-sid", s.id);
+    row.appendChild(tog);
+    if (s.user) {
+      var rm = el("button", "", "Remove");
+      rm.setAttribute("data-action", "source-remove");
+      rm.setAttribute("data-sid", s.id);
+      row.appendChild(rm);
+    }
+    card.appendChild(row);
+    o.appendChild(card);
+  }
+  var pager = el("div", "actions");
+  var prev = el("button", "", "\u00AB Page Up"); prev.setAttribute("data-action", "sources-prev"); if (sourcesPage <= 0) prev.disabled = true;
+  var next = el("button", "", "Page Down \u00BB"); next.setAttribute("data-action", "sources-next"); if (sourcesPage >= pages - 1) next.disabled = true;
+  pager.appendChild(prev);
+  pager.appendChild(el("span", "small", "Page " + (sourcesPage + 1) + " of " + pages));
+  pager.appendChild(next);
+  o.appendChild(pager);
+  var bottom = el("div", "actions");
+  var add = el("button", "primary", "Add a repository");
+  add.setAttribute("data-action", "source-addform");
+  bottom.appendChild(add);
+  var back = el("button", "", "Back");
+  back.setAttribute("data-action", "close");
+  bottom.appendChild(back);
+  o.appendChild(bottom);
+}
+
+function showAddSource() {
+  var o = $("overlay");
+  clear(o);
+  o.className = "";
+  if (busy && busy.kind === "sources") { showSourcesBusy(); return; }
+  o.appendChild(el("h2", "", "Add a repository"));
+  o.appendChild(el("p", "body", "Type the web address of a package repository (the manifest.json file). It must start with https://"));
+  o.appendChild(el("p", "small", "Only add repositories you trust. Their packages are not checked by anyone and can run code on your Kindle."));
+  var input = document.createElement("input");
+  input.type = "text";
+  input.id = "srcurl";
+  input.value = srcUrl;
+  input.setAttribute("placeholder", "https://example.github.io/repo/manifest.json");
+  input.setAttribute("autocomplete", "off");
+  input.setAttribute("autocorrect", "off");
+  input.setAttribute("autocapitalize", "off");
+  input.addEventListener("input", function() { srcUrl = input.value.replace(/^\s+|\s+$/g, ""); confirmAdd = false; });
+  o.appendChild(input);
+
+  var p = srcPreview;
+  if (p && p.url === srcUrl) {
+    if (!p.ok) {
+      o.appendChild(el("div", "cleanmsg", "Not usable: " + (p.error || "unknown problem")));
+    } else {
+      var info = p.name + " (" + (p.format === "zen" ? "KOReader plugins" : "KPM packages") + "), " + p.packages + " packages";
+      if (p.sample && p.sample.length) info += ". For example: " + p.sample.join(", ");
+      o.appendChild(el("div", "cleanmsg", "Found: " + info + (p.exists ? ". It is already in your list." : ".")));
+    }
+  } else if (srcUrl && !SRC_URL_RE.test(srcUrl)) {
+    o.appendChild(el("p", "small", "That does not look like an allowed address (letters, digits and : / . _ ~ % + - only)."));
+  }
+  var row = el("div", "actions");
+  var chk = el("button", p && p.ok && p.url === srcUrl ? "" : "primary", "Check");
+  chk.setAttribute("data-action", "source-check");
+  row.appendChild(chk);
+  if (p && p.ok && !p.exists && p.url === srcUrl) {
+    var go = el("button", "primary", confirmAdd ? "Tap again: add it" : "Add it");
+    go.setAttribute("data-action", "source-add");
+    row.appendChild(go);
+  }
+  o.appendChild(row);
+  var back = el("button", "", "Back");
+  back.setAttribute("data-action", "source-back");
+  o.appendChild(back);
+}
+
 function showSuggest() {
   var o = $("overlay");
   clear(o);
@@ -988,6 +1142,40 @@ function onTap(e) {
     case "cleanup-close":
       closeOverlay();
       break;
+    case "source-toggle":
+      var sid = a.node.getAttribute("data-sid");
+      var src = null, list = (catalog && catalog.sources) || [];
+      for (var q = 0; q < list.length; q++) if (list[q].id === sid) src = list[q];
+      if (!src) return;
+      if (!src.enabled && src.trust !== "reviewed" && confirmSource !== sid) { confirmSource = sid; showSources(); return; }
+      startSources(src.enabled ? "disable" : "enable", sid, src.enabled ? "Turning it off" : "Turning it on and fetching its packages");
+      break;
+    case "source-remove":
+      startSources("remove", a.node.getAttribute("data-sid"), "Removing it");
+      break;
+    case "sources-prev":
+      if (sourcesPage > 0) { sourcesPage--; showSources(); }
+      break;
+    case "sources-next":
+      sourcesPage++; showSources();
+      break;
+    case "source-addform":
+      srcPreview = null; confirmAdd = false;
+      showAddSource();
+      break;
+    case "source-check":
+      var inp = $("srcurl");
+      if (inp) srcUrl = inp.value.replace(/^\s+|\s+$/g, "");
+      if (!SRC_URL_RE.test(srcUrl)) { showAddSource(); return; }
+      startSources("check", srcUrl, "Checking the address");
+      break;
+    case "source-add":
+      if (!confirmAdd) { confirmAdd = true; showAddSource(); return; }
+      startSources("add", srcUrl, "Adding the repository");
+      break;
+    case "source-back":
+      showSources();
+      break;
   }
 }
 
@@ -1024,6 +1212,7 @@ document.addEventListener("DOMContentLoaded", function() {
   k.messaging.receiveMessage("updateCheckStatus", onCheckResult);
   k.messaging.receiveMessage("cleanupStatus", onCleanupResult);
   k.messaging.receiveMessage("rateStatus", onRateResult);
+  k.messaging.receiveMessage("sourcesStatus", onSourcesResult);
 
   sendKFPM("-abi");
 

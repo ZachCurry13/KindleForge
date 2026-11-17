@@ -45,6 +45,8 @@ type KpkgRecord struct {
 	Version string `json:"version"`
 	Repo    string `json:"repo"`
 	At      string `json:"at"`
+	Kind    string `json:"kind,omitempty"`   // "" = KindleModding package, "zen" = KOReader plugin
+	Module  string `json:"module,omitempty"` // zen: the <module>.koplugin folder name
 }
 
 func kpkgRoot(c Config) string              { return c.path("kpkg") }
@@ -93,6 +95,9 @@ func kpkgSources(c Config, rf ReposFile, online bool) (map[string]KpkgSource, []
 	out := map[string]KpkgSource{}
 	var statuses []RepoStatus
 	for _, r := range rf.Repos {
+		if r.Format == "zen" {
+			continue // read by zen.go
+		}
 		m, src := loadManifest(c, r, online)
 		statuses = append(statuses, RepoStatus{ID: r.ID, URL: r.URL, Source: src, Packages: len(m.Packages)})
 		for id, p := range m.Packages {

@@ -197,6 +197,30 @@ type Repo struct {
 	// sha256 pin. Used for the community repo, whose downloads live on
 	// authors' servers and are reviewed once by a maintainer.
 	RequireHash bool `json:"requireHash,omitempty"`
+
+	// Directory information (all optional; see sources.go).
+	Format   string `json:"format,omitempty"`   // "kpm" (default) or "zen"
+	Name     string `json:"name,omitempty"`     // display name
+	Trust    string `json:"trust,omitempty"`    // reviewed | community | yours
+	Note     string `json:"note,omitempty"`     // one honest line about what it is
+	Homepage string `json:"homepage,omitempty"` // where to read more
+	Default  bool   `json:"default,omitempty"`  // directory source that is on without being enabled
+}
+
+// SourceInfo is one line of the Sources screen: every repository KindleForge
+// knows about, whether it is switched on, and where it came from.
+type SourceInfo struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Format   string `json:"format"`
+	Trust    string `json:"trust"`
+	Note     string `json:"note,omitempty"`
+	Homepage string `json:"homepage,omitempty"`
+	URL      string `json:"url"`
+	Enabled  bool   `json:"enabled"`
+	User     bool   `json:"user"`              // added by the user (can be removed)
+	Packages int    `json:"packages"`          // filled in from the last fetch
+	Fetched  string `json:"fetched,omitempty"` // network | cache | unavailable
 }
 
 type ReposFile struct {
@@ -206,6 +230,14 @@ type ReposFile struct {
 	Categories map[string]string `json:"categories"`
 	// Base URL of the ratings endpoint (https). Empty disables rating.
 	RatingsURL string `json:"ratingsURL,omitempty"`
+	// Directory of optional repositories (trust "community"): off unless
+	// Default is set or the user enables them.
+	Sources []Repo `json:"sources,omitempty"`
+	// User file only: ids of directory sources the user switched on.
+	Enable []string `json:"enable,omitempty"`
+	// Effective view for the Sources screen (computed, never stored).
+	Directory []SourceInfo `json:"-"`
+
 	// Known apps to look for on the Kindle (see detect.go).
 	Detect []DetectEntry `json:"detect,omitempty"`
 	// Where people go to suggest an app (https), shown by "Suggest an App".
@@ -259,6 +291,16 @@ func parseConfig(data []byte) (ReposFile, error) {
 			return rf, fmt.Errorf("bad repo entry %q (id required, https url required)", r.ID)
 		}
 	}
+	// The optional directory: drop (do not fail on) entries that are malformed.
+	var ok []Repo
+	for _, r := range rf.Sources {
+		if validSource(r) {
+			ok = append(ok, r)
+		} else {
+			logf("ignoring invalid directory source %q", r.ID)
+		}
+	}
+	rf.Sources = ok
 	return rf, nil
 }
 
@@ -341,18 +383,49 @@ func loadRepos(c Config, online bool) ReposFile {
 		out.RatingsURL = v
 	}
 	seenURL := map[string]bool{}
-	add := func(r Repo) {
-		if r.ID == "" || r.URL == "" || disabled[r.ID] || seenURL[r.URL] {
+	seenID := map[string]bool{}
+	enabled := map[string]bool{}
+	for _, id := range user.Enable {
+		enabled[id] = true
+	}
+	// consider adds one repository to the directory and, when it is switched
+	// on, to the list that is actually fetched.
+	consider := func(r Repo, trust string, isUser bool, defaultOn bool) {
+		if r.ID == "" || r.URL == "" || seenID[r.ID] {
 			return
 		}
-		seenURL[r.URL] = true
-		out.Repos = append(out.Repos, r)
+		seenID[r.ID] = true
+		if r.Format == "" {
+			r.Format = "kpm"
+		}
+		if r.Trust == "" {
+			r.Trust = trust
+		}
+		on := (defaultOn && !disabled[r.ID]) || (!defaultOn && enabled[r.ID] && !disabled[r.ID])
+		if isUser {
+			on = !disabled[r.ID]
+		}
+		name := r.Name
+		if name == "" {
+			name = r.ID
+		}
+		out.Directory = append(out.Directory, SourceInfo{ID: r.ID, Name: name, Format: r.Format, Trust: r.Trust, Note: r.Note,
+			Homepage: r.Homepage, URL: r.URL, Enabled: on, User: isUser})
+		if on && !seenURL[r.URL] {
+			seenURL[r.URL] = true
+			out.Repos = append(out.Repos, r)
+		}
 	}
 	for _, r := range base.Repos {
-		add(r)
+		consider(r, "reviewed", false, true)
+	}
+	for _, r := range base.Sources {
+		consider(r, "community", false, r.Default)
 	}
 	for _, r := range user.Repos {
-		add(r)
+		if validSource(r) {
+			consider(r, "yours", true, true)
+		}
 	}
 	for k, v := range base.Categories {
 		out.Categories[k] = v

@@ -237,7 +237,7 @@ func buildGingrCatalog(c Config, rf ReposFile, online bool) Catalog {
 		cat.Packages = append(cat.Packages, p)
 	}
 	for _, id := range sortedKeys(kinst) { // installed from a repo we no longer list
-		if _, ok := srcs[id]; ok {
+		if _, ok := srcs[id]; ok || kinst[id].Kind == "zen" { // plugins are listed by applyZen
 			continue
 		}
 		cat.Packages = append(cat.Packages, CatPackage{

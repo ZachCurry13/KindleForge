@@ -1,0 +1,411 @@
+{
+  "apps": [
+    {
+      "description": "Replace the OS completely on supported models",
+      "kpkg": false,
+      "name": "Android on Kindles",
+      "release": "Android",
+      "repo": "Ooonana/Guide-to-installing-android-on-kindle",
+      "section": "Amazon Alternatives",
+      "zip": true
+    },
+    {
+      "description": "Download Kindle Tweaks with ease",
+      "kpkg": false,
+      "name": "KindleForge",
+      "release": "v4.1.0-eol",
+      "repo": "KindleTweaks/KindleForge",
+      "section": "Quality of Life",
+      "zip": false
+    },
+    {
+      "description": "Download books from Anna's Archive",
+      "kpkg": false,
+      "name": "KindleFetch",
+      "release": "v1.3",
+      "repo": "justrals/KindleFetch",
+      "section": "Quality of Life",
+      "zip": true
+    },
+    {
+      "description": "Update Universal hotfix instantly.",
+      "kpkg": false,
+      "name": "HotfixUpdater",
+      "release": "v1.0.2",
+      "repo": "KindleTweaks/HotfixUpdater",
+      "section": "Quality of Life",
+      "zip": true
+    },
+    {
+      "description": "Desktop-grade text editor with bluetooth keyboard capabilities",
+      "kpkg": false,
+      "name": "Textadept",
+      "release": "12.9.2",
+      "repo": "kbarni/textadept-kindle",
+      "section": "Productivity",
+      "zip": true
+    },
+    {
+      "description": "Anki based flashcards on Kindles",
+      "kpkg": false,
+      "name": "KAnki",
+      "release": "v1.1.2",
+      "repo": "crizmo/KAnki",
+      "section": "Productivity",
+      "zip": true
+    },
+    {
+      "description": "Anki reviewer for Kindle. \ud83d\udcd6 Uses the real Anki backend. Sync, review, bury cards.",
+      "kpkg": false,
+      "name": "RAnki",
+      "release": "v0.2",
+      "repo": "crazy-electron/ranki",
+      "section": "Productivity",
+      "zip": true
+    },
+    {
+      "description": "Pomodoro timer for Kindles",
+      "kpkg": false,
+      "name": "KPomo",
+      "release": "v1.0.0",
+      "repo": "crizmo/KPomo",
+      "section": "Productivity",
+      "zip": true
+    },
+    {
+      "description": "Unique drawing software for the Kindle",
+      "kpkg": false,
+      "name": "Kreate",
+      "release": null,
+      "repo": "Foskya/Kreate",
+      "section": "Productivity",
+      "zip": false
+    },
+    {
+      "description": "Kindle Wordle, text-based puzzle",
+      "kpkg": false,
+      "name": "KWordle",
+      "release": "v1.6.0",
+      "repo": "crizmo/KWordle",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "Fast chess",
+      "kpkg": false,
+      "name": "IllusionChess",
+      "release": "v2.0",
+      "repo": "penguins184/IllusionChess",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "Slower, chess with more sophisticated AI, classic minesweeper puzzle",
+      "kpkg": false,
+      "name": "Gnome Chess & Minesweeper",
+      "release": "v1.1",
+      "repo": "crazy-electron/GnomeGames4Kindle",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "Ultra-fast & optimised gameboy emulator with bluetooth audio and multiple rendering modes",
+      "kpkg": false,
+      "name": "Gambatte-K2",
+      "release": "1.0",
+      "repo": "crazy-electron/gambatte-k2",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "Kindle crossword, text-based puzzle",
+      "kpkg": false,
+      "name": "Crossword",
+      "release": "0.2.1",
+      "repo": "roygbyte/crossword.koplugin",
+      "section": "Games",
+      "zip": false
+    },
+    {
+      "description": "Soft-float Kindle 1.8 Minecraft server",
+      "kpkg": false,
+      "name": "KindleKraft",
+      "release": "v1.0.0",
+      "repo": "penguins184/KindleKraft",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "Hard-float 1.21.8 Minecraft KindleCraft.sh and cross binary to /mnt/us/documents/KindleCraft",
+      "kpkg": false,
+      "name": "KindleCraft",
+      "release": null,
+      "repo": "gingrspacecadet/bareiron",
+      "section": "Games",
+      "zip": false
+    },
+    {
+      "description": "BattleShip port to the Kindle",
+      "kpkg": false,
+      "name": "KShips",
+      "release": "1.5.6",
+      "repo": "LOT-Projects/KShips",
+      "section": "Games",
+      "zip": true
+    },
+    {
+      "description": "An e-ink optimised terminal for Kindles",
+      "kpkg": false,
+      "name": "kTerm",
+      "release": "v2.6",
+      "repo": "bfabiszewski/kterm",
+      "section": "Development",
+      "zip": true
+    },
+    {
+      "description": "Run Alpine Linux on the Kindle",
+      "kpkg": false,
+      "name": "Alpine",
+      "release": "v0.2-alpha2",
+      "repo": "schuhumi/alpine_kindle",
+      "section": "Development",
+      "zip": true
+    },
+    {
+      "description": "SSH Into your Kindle",
+      "kpkg": false,
+      "name": "UsbNetLite",
+      "release": "1.0.M",
+      "repo": "notmarek/kindle-usbnetlite",
+      "section": "Development",
+      "zip": false
+    },
+    {
+      "description": "Listen to music via bluetooth",
+      "kpkg": false,
+      "name": "KinAMP",
+      "release": "3.0.0",
+      "repo": "kbarni/KinAMP",
+      "section": "Audio",
+      "zip": true
+    },
+    {
+      "description": "Listen to audiobooks with covers and more via bluetooth",
+      "kpkg": false,
+      "name": "LARK Libre Audiobook Player for Kindle",
+      "release": "2.8.1",
+      "repo": "kbarni/LARKPlayer",
+      "section": "Audio",
+      "zip": true
+    },
+    {
+      "description": "A Kindle Package Manager. Download tweaks directly on-device",
+      "kpkg": false,
+      "name": "KPM",
+      "release": "apk",
+      "repo": "Gingrspacecadet/KPM",
+      "section": "Miscellaneous",
+      "zip": true
+    },
+    {
+      "description": "",
+      "kpkg": false,
+      "name": "Awesome E-Ink",
+      "release": null,
+      "repo": "asapelkin/awesome-eink",
+      "section": "Miscellaneous",
+      "zip": false
+    }
+  ],
+  "repositories": [
+    {
+      "format": "kpm",
+      "id": "kindletweaks-repo",
+      "known": true,
+      "license": "GPL-3.0",
+      "name": "KindleTweaks",
+      "packages": 5,
+      "pushed": "2026-08-2\u2026",
+      "repo": "KindleTweaks/Repo",
+      "sample": [
+        "KUALA",
+        "Gargoyle",
+        "KinAMP",
+        "LARK",
+        "RAnki"
+      ],
+      "stars": 7,
+      "url": "https://raw.githubusercontent.com/KindleTweaks/Repo/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "mzimandl-koplugins",
+      "known": false,
+      "license": "MIT",
+      "name": "mzimandl KOReader plugins",
+      "packages": 3,
+      "pushed": "2026-11-1\u2026",
+      "repo": "mzimandl/koplugins",
+      "sample": [
+        "Songbook",
+        "Battleships Wi-Fi",
+        "Backgammon Wi-Fi"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/mzimandl/koplugins/master/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "saterz-zenpm-repo",
+      "known": false,
+      "license": "none",
+      "name": "Saterz's Repository",
+      "packages": 2,
+      "pushed": "2026-10-2\u2026",
+      "repo": "Saterz/zenpm-repo",
+      "sample": [
+        "Kanisync",
+        "Diffs"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/Saterz/zenpm-repo/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "aminztw-koreader-tategumi-backup",
+      "known": true,
+      "license": "AGPL-3.0",
+      "name": "KOReader Tategumi",
+      "packages": 2,
+      "pushed": "2026-11-1\u2026",
+      "repo": "aminztw/koreader-tategumi-backup",
+      "sample": [
+        "KOReader Tategumi",
+        "KOReader Tategumi Nightly"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/aminztw/koreader-tategumi-backup/master/kpm/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "bunkford-whispersync-koplugin",
+      "known": false,
+      "license": "none",
+      "name": "bunkford's KOReader plugins",
+      "packages": 2,
+      "pushed": "2026-09-0\u2026",
+      "repo": "bunkford/whispersync.koplugin",
+      "sample": [
+        "Kindle Whispersync",
+        "Read Aloud Edge voices"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/bunkford/whispersync.koplugin/main/zenpm/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "heinrich-xiao-ktex-kpm",
+      "known": false,
+      "license": "none",
+      "name": "KTEX Repository",
+      "packages": 1,
+      "pushed": "2026-10-0\u2026",
+      "repo": "Heinrich-XIAO/ktex-kpm",
+      "sample": [
+        "KTEX - Handwriting to LaTeX Pad"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/Heinrich-XIAO/ktex-kpm/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "jdsnyke-koreader-metadata-scraper",
+      "known": false,
+      "license": "none",
+      "name": "JDsnyke KOReader Plugins",
+      "packages": 1,
+      "pushed": "2026-09-0\u2026",
+      "repo": "JDsnyke/koreader-metadata-scraper",
+      "sample": [
+        "Metadata Scraper"
+      ],
+      "stars": 1,
+      "url": "https://raw.githubusercontent.com/JDsnyke/koreader-metadata-scraper/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "jamesbedson-kindlefetch-kpm-repo",
+      "known": false,
+      "license": "none",
+      "name": "Kindle Fetch Repo",
+      "packages": 1,
+      "pushed": "2026-08-1\u2026",
+      "repo": "JamesBedson/kindlefetch-kpm-repo",
+      "sample": [
+        "KindleFetch"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/JamesBedson/kindlefetch-kpm-repo/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "akshaylahudkar-dropbear-ssh",
+      "known": true,
+      "license": "none",
+      "name": "Dropbear SSH Repo",
+      "packages": 1,
+      "pushed": "2026-09-0\u2026",
+      "repo": "akshaylahudkar/dropbear-ssh",
+      "sample": [
+        "Dropbear SSH"
+      ],
+      "stars": 8,
+      "url": "https://raw.githubusercontent.com/akshaylahudkar/dropbear-ssh/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "denmaier-netbird-koplugin",
+      "known": false,
+      "license": "MIT",
+      "name": "NetBird for KOReader",
+      "packages": 1,
+      "pushed": "2026-11-1\u2026",
+      "repo": "denMaier/netbird.koplugin",
+      "sample": [
+        "NetBird VPN"
+      ],
+      "stars": 1,
+      "url": "https://raw.githubusercontent.com/denMaier/netbird.koplugin/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "dochoithuvi-ghostguard-kindle",
+      "known": false,
+      "license": "NOASSERTION",
+      "name": "Do Choi Thu Vi GhostGuard Repository",
+      "packages": 1,
+      "pushed": "2026-10-1\u2026",
+      "repo": "dochoithuvi/ghostguard-kindle",
+      "sample": [
+        "DCPRO GhostGuard"
+      ],
+      "stars": 2,
+      "url": "https://raw.githubusercontent.com/dochoithuvi/ghostguard-kindle/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "michalkulik-kpm-koreader",
+      "known": true,
+      "license": "none",
+      "name": "KOReader mkulik",
+      "packages": 1,
+      "pushed": "2026-10-3\u2026",
+      "repo": "michalkulik/kpm-koreader",
+      "sample": [
+        "KOReader mkulik"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/michalkulik/kpm-koreader/main/manifest.json"
+    }
+  ]
+}
