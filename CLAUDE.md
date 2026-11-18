@@ -41,6 +41,9 @@ Catalog definition has `detect` entries (paths all-present, optional versionFile
 - Suggestions: issue form `.github/ISSUE_TEMPLATE/suggest-app.yml` (label `app-suggestion`) -> `scripts/pull_suggestions.py` -> `SUGGESTIONS.md` via `.github/workflows/suggestions.yml` (never interpolates issue text into shell; titles sanitised). `suggestURL` in config.json feeds the app's "Suggest an App" screen. See CONTRIBUTING.md. Issues must be enabled on the repo (forks have them off by default).
 - Tests: `cd KFPM && go test ./...`, `cd ratings-worker && npm test`, `python3 scripts/test_{sync_packages,add_app,pull_suggestions}.py`.
 
+## Where did it go (`where.go`)
+`change()` snapshots documents/*.sh, extensions/ folders, the gingr terminal bin dir and new top-level folders before an install and diffs after (`placesSnapshot` / `diffPlaces`), stores the result per package in `.KFPM/where.json` (`Checked:true` with empty lists = "nothing visible appeared"), and `applyWhere` puts it in `catalog.json` as `where`. An update that adds nothing new keeps the old record; uninstall forgets it. Plugins report their `.koplugin` folder. The page (`whereLines`) turns it into plain sentences in the banner and Details.
+
 ## Launching kpkg packages (`launch.go`)
 KindleModding packages ship scriptlets whose line is `/var/local/kmc/bin/kpm launch <id>`; without that KPM it fails ("kpm: not found"). `kfpm -L <id> [args]` = `kpm launch` (chdir to the package folder, `exec /bin/sh launch.sh`, KPM env). `fixLaunchers` rewrites exactly that line (line-anchored, id-bounded, top-level `documents/*.sh`, regular files <256 KB, only ids in `kpkg/installed.json`, not plugins) to `'<self>' -L <id>`; it runs from `refreshCatalog` and `-abi`, so already-installed packages heal on the next app start. 4 of 5 KindleTweaks packages need it (kinamp does not).
 

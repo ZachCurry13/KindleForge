@@ -67,6 +67,11 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
 
+## 5k. Where did it go
+- [ ] Install Blackjack (or Kwordle): the banner says it is in your Library; the launcher appears there after a minute or a restart.
+- [ ] Install Hello: the banner says it is a terminal command with no icon.
+- [ ] Install an app whose installer does nothing visible: Details says "Nothing new appeared" and View log shows why.
+
 ## 5j. Launching KindleTweaks apps
 - [ ] Install KUALA, open KindleForge once (or Refresh), then open KUALA from the Library: it starts (no "kpm: not found"). Same for Gargoyle, LARK, RAnki. `documents/kuala.sh` ends with a line calling `.../KFPM -L kuala`.
 

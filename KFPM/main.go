@@ -237,6 +237,7 @@ Data directory: /mnt/us/.KFPM  (repos.json, catalog.json, cache/, last-log.txt)`
 func change(c Config, action, id, statusProp string, verbose bool) error {
 	resetLog(c)
 	var err error
+	before := placesSnapshot(c)
 	rfAll := loadRepos(c, false)
 	zsrcs, _ := zenSources(c, rfAll, false)
 	_, zenOffered := zsrcs[id]
@@ -271,6 +272,11 @@ func change(c Config, action, id, statusProp string, verbose bool) error {
 	} else {
 		fmt.Printf("[KFPM] %s of '%s' succeeded!\n", action, id)
 	}
+	if err == nil && action == "install" {
+		recordWhere(c, id, before)
+	} else if err == nil && action == "uninstall" {
+		forgetWhere(c, id)
+	}
 	// Rewrite catalog.json BEFORE signalling: the frontend reloads it on the event.
 	refreshCatalog(c, false, verbose)
 	setStatus(statusProp, status)
@@ -299,6 +305,7 @@ func refreshCatalog(c Config, sync, verbose bool) error {
 	applyRatings(c, rf, loadRatingsFile(c, sync), &cat)
 	applyDetected(c, rf, sync, &cat)
 	applyZen(c, rf, sync, &cat)
+	applyWhere(c, &cat)
 	annotateSources(rf, &cat)
 	if strings.HasPrefix(rf.SuggestURL, "https://") {
 		cat.SuggestURL = rf.SuggestURL

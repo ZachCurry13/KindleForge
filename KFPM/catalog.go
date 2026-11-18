@@ -88,6 +88,7 @@ type CatPackage struct {
 	ReadOnly         bool     `json:"readOnly,omitempty"` // shown for information; no install/remove buttons
 	Note             string   `json:"note,omitempty"`
 	ShortNote        string   `json:"shortNote,omitempty"`
+	Where            *Where   `json:"where,omitempty"` // what the install added, and where
 }
 
 type RepoStatus struct {

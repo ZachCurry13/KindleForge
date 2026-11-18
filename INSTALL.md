@@ -75,6 +75,16 @@ System menu > **Suggest an App** shows the address of the suggestion form (open 
 - **Community repository:** apps people suggest are added to `catalog/community/manifest.json` with a **sha256 pin**, and that repository is marked `requireHash`: KindleForge refuses any package from it that has no pin or whose download does not match.
 - **Trust:** the install and uninstall scripts come from the repository and run as root on the Kindle, exactly as with any KPM. The repository publishes no checksums, so KindleForge relies on https. I statically reviewed the five current packages' scripts: they only write under `/mnt/us`. Only add repositories you trust.
 
+## Where did my app go?
+Not every package puts an icon on the home screen. After an install KindleForge compares what is on the Kindle before and after, and tells you what appeared, both in the banner and in the package's **Details** ("Where to find it"):
+- **In your Library**: a launcher (`.sh`) in `documents/`. The Kindle can take a minute to notice it; if it doesn't show, restart the Kindle.
+- **In KUAL**: a folder in `extensions/`. Open KUAL to use it.
+- **A terminal command**: a program with no icon (for example Hello, Hyprpad, cmsg). Open KTerm and type its name.
+- **In KOReader's plugin list**: a KOReader plugin (restart KOReader).
+- **Nothing new**: it only replaced existing files, or the installer did nothing. Open **View log** to see what it printed.
+
+Only installs made with this version are recorded; reinstall an older one to see where it went.
+
 ## Launching KindleTweaks apps (KUALA, Gargoyle, LARK, RAnki)
 These packages come with a launcher file in your Library whose one real line is `kpm launch <name>`, written for KindleModding's KPM. If your Kindle has the *other* KPM, that program is missing and the launcher fails with "`/var/local/kmc/bin/kpm`: not found". KindleForge repairs this itself: every time it opens, and after every install, it rewrites that single line in the launchers of packages **it installed** so they call KindleForge's own `launch` command, which runs the package's `launch.sh` exactly as `kpm launch` would. Only that line, only in top-level `documents/*.sh` files, only for installed packages. If an app installed earlier still shows the error, open KindleForge once (or tap Refresh) and try the launcher again.
 

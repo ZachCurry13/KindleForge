@@ -369,7 +369,13 @@ function onOpResult(isUninstall) {
       notice = "Failed:" + (op.kind === "upgrade" ? " update all" : " " + op.kind + what);
       lastFailure = { text: notice };
     }
-    loadCatalog(function() { renderAll(); });
+    loadCatalog(function() {
+      if (success && (op.kind === "install" || op.kind === "update")) {
+        var lines = whereLines(findPackage(op.id));
+        if (lines.length) notice += " " + lines[0];
+      }
+      renderAll();
+    });
   };
 }
 
@@ -731,6 +737,20 @@ function metaRow(label, value) {
   return d;
 }
 
+// Plain-language "where did it go" lines for an installed package.
+function whereLines(p) {
+  var w = p && p.where;
+  if (!w) return [];
+  var out = [];
+  if (w.library && w.library.length) out.push("In your Library: " + w.library.join(", ") + ". It can take a minute to appear; restart the Kindle if it does not.");
+  if (w.kual && w.kual.length) out.push("In KUAL: " + w.kual.join(", ") + ". Open KUAL to use it.");
+  if (w.terminal && w.terminal.length) out.push("A terminal command, with no icon: open KTerm and type " + w.terminal.join(", ") + ".");
+  if (w.koreader && w.koreader.length) out.push("In KOReader's plugin list. Restart KOReader to load it.");
+  if (w.folders && w.folders.length) out.push("A new folder on your Kindle: " + w.folders.join(", ") + ".");
+  if (!out.length && w.checked) out.push("Nothing new appeared in your Library, in KUAL or as a terminal command. It may only have replaced files that were already there, or the install may not have done anything. Open View log to see what it printed.");
+  return out;
+}
+
 function showDetails(p) {
   var o = $("overlay");
   clear(o);
@@ -751,6 +771,11 @@ function showDetails(p) {
   o.appendChild(el("p", "body", shorten(p.description, 600) || "No description."));
 
   if (p.note) o.appendChild(el("p", "body", shorten(p.note, 300)));
+  var wl = p.installed ? whereLines(p) : [];
+  if (wl.length) {
+    o.appendChild(el("p", "small", "Where to find it:"));
+    for (var wi = 0; wi < wl.length; wi++) o.appendChild(el("p", "body", wl[wi]));
+  }
   if (detailNote) o.appendChild(el("div", "cleanmsg", detailNote));
   if (busy && busy.kind === "rate") {
     o.appendChild(el("div", "cleanmsg", (busy.label || "Working") + "..."));
