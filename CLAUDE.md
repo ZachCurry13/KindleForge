@@ -41,6 +41,9 @@ Catalog definition has `detect` entries (paths all-present, optional versionFile
 - Suggestions: issue form `.github/ISSUE_TEMPLATE/suggest-app.yml` (label `app-suggestion`) -> `scripts/pull_suggestions.py` -> `SUGGESTIONS.md` via `.github/workflows/suggestions.yml` (never interpolates issue text into shell; titles sanitised). `suggestURL` in config.json feeds the app's "Suggest an App" screen. See CONTRIBUTING.md. Issues must be enabled on the repo (forks have them off by default).
 - Tests: `cd KFPM && go test ./...`, `cd ratings-worker && npm test`, `python3 scripts/test_{sync_packages,add_app,pull_suggestions}.py`.
 
+## Layout scales to the screen
+`style.css` is all `rem` (16px = 1rem). `applyScale()` sets the root font size to `16 * min(width/758, height/1024)` (clamped 1..2.2), because the Kindle's browser reports a bigger viewport than the 758x1024 the design started from. `recomputePageSize()` renders the tallest possible card (`WORST_CARD`), measures it and the page chrome, and sets `pageSize` so every page fits without scrolling. Both run on load, on resize and on every list render.
+
 ## Package info sync (`scripts/sync_packages.py`, `.github/workflows/sync-packages.yml`)
 Daily job: reads gingrspacecadet/kpm `packages.list`, derives name/author/description/category per package from the upstream project (GitHub repo named in the package's `install.kpm`, a same-named repo by the KPM author, or the KPM wiki page) and writes them into `catalog/config.json` `packages`. Fields it wrote are listed in the entry's `auto`; human-written fields are never overwritten. Infrastructure (`lib*`, kpm, musl, ...) is added to `hidden`. Tests: `python3 scripts/test_sync_packages.py`. Kindles read the result on Refresh.
 

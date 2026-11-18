@@ -16,7 +16,7 @@ var DATA_BASE = (document.location.protocol === "file:") ? "file:///mnt/us/.KFPM
 var STALE_MS = 24 * 3600 * 1000;      // refresh by itself when the list is older than this
 var RETRY_MS = 6 * 3600 * 1000;       // ...but do not retry a failed attempt more often than this
 var OLD_MS = 7 * 24 * 3600 * 1000;    // warn in the footer past this
-var PAGE_SIZE = 3; // what fits on one e-ink screen without scrolling
+var pageSize = 3; // cards per page: measured to fit the screen (recomputePageSize)
 var OP_TIMEOUT_MS = 6 * 60 * 1000;
 var ID_RE = /^[A-Za-z0-9._-]{1,64}$/; // ids end up in a shell command line
 
@@ -446,7 +446,57 @@ function visiblePackages() {
 }
 
 function pageCount(total) {
-  return Math.max(1, Math.ceil(total / PAGE_SIZE));
+  return Math.max(1, Math.ceil(total / pageSize));
+}
+
+// ---- fitting the screen -------------------------------------------------------
+
+// Everything in style.css is in rem, so one number scales the whole interface.
+// The design is 758 x 1024 css px; a bigger screen (the Kindle's browser
+// reports a larger viewport than that) gets proportionally bigger text and buttons.
+function applyScale() {
+  var w = window.innerWidth || document.documentElement.clientWidth || 758;
+  var h = window.innerHeight || document.documentElement.clientHeight || 1024;
+  var scale = Math.min(w / 758, h / 1024); // the limiting dimension decides, so landscape stays sensible
+  if (scale < 1) scale = 1;
+  if (scale > 2.2) scale = 2.2;
+  document.documentElement.style.fontSize = (Math.round(16 * scale * 100) / 100) + "px";
+}
+
+// The tallest card a package can produce (long text, both badges, rating).
+var WORST_CARD = {
+  id: "probe", name: "Wwwwwwwwwwwwwwwwwwww", author: "Wwwwwwwwwwwwww", repo: "x", category: "", supported: true,
+  description: "Wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww wwwww",
+  installed: true, installedVersion: "1.2.3", version: "1.3.0", updateAvailable: true, rating: 4.5, ratingCount: 12,
+  dependencies: []
+};
+
+function boxExtras(node) {
+  var cs = window.getComputedStyle(node);
+  return (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0) + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+}
+
+// How many cards fit below the search bar and above the pager without
+// scrolling? Measured with the tallest possible card, so every page fits.
+function recomputePageSize() {
+  var box = $("packages");
+  clear(box);
+  var probe = renderCard(WORST_CARD);
+  box.appendChild(probe);
+  var cardH = probe.getBoundingClientRect().height + (parseFloat(window.getComputedStyle(probe).marginBottom) || 0);
+  clear(box);
+
+  var container = document.querySelector(".container");
+  var chrome = boxExtras(container) - (parseFloat(window.getComputedStyle(container).marginTop) || 0) - (parseFloat(window.getComputedStyle(container).marginBottom) || 0);
+  for (var i = 0; i < container.children.length; i++) {
+    var kid = container.children[i];
+    if (window.getComputedStyle(kid).display === "none") continue;
+    if (kid === box) { chrome += boxExtras(box); continue; }
+    chrome += kid.getBoundingClientRect().height + (parseFloat(window.getComputedStyle(kid).marginTop) || 0) + (parseFloat(window.getComputedStyle(kid).marginBottom) || 0);
+  }
+  var avail = (window.innerHeight || 1024) - chrome - 6;
+  var n = cardH > 0 ? Math.floor(avail / cardH) : 3;
+  pageSize = Math.max(1, Math.min(12, n));
 }
 
 function findPackage(id) {
@@ -556,6 +606,7 @@ function renderCard(p) {
 }
 
 function renderList() {
+  recomputePageSize();
   var box = $("packages");
   clear(box);
   var list = visiblePackages();
@@ -576,8 +627,8 @@ function renderList() {
   } else if (list.length === 0) {
     box.appendChild(el("div", "empty", query ? "Nothing matches “" + query + "”." : "Nothing here."));
   } else {
-    var start = page * PAGE_SIZE;
-    for (var i = start; i < list.length && i < start + PAGE_SIZE; i++) {
+    var start = page * pageSize;
+    for (var i = start; i < list.length && i < start + pageSize; i++) {
       box.appendChild(renderCard(list[i]));
     }
   }
@@ -1189,7 +1240,14 @@ function onSearchInput() {
   searchTimer = setTimeout(function() { renderList(); }, 250);
 }
 
+var resizeTimer = null;
+window.addEventListener("resize", function() { // rotation, or the browser bar appearing
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() { applyScale(); renderList(); }, 250);
+});
+
 document.addEventListener("DOMContentLoaded", function() {
+  applyScale();
   $("js-status").textContent = "JS Working!";
 
   document.addEventListener("click", onTap);

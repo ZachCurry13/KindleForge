@@ -67,6 +67,9 @@ Use a small, harmless package first (e.g. KUALA).
 - [ ] Disable Wi-Fi and tap Update: expect "update failed. Nothing was changed." and the old version still works.
 - [ ] Catalog definition: edit `catalog/config.json` on GitHub (e.g. a category), Refresh on the Kindle, footer shows `(github)` and the change appears without an app update.
 
+## 5i. Layout
+- [ ] The list fills most of the screen height (about 80-90%) and never scrolls; text is comfortably large. If it is too small/large or a page scrolls, tell me the model and what the page shows at the bottom (a photo is ideal).
+
 ## 5h. Sources and repositories
 - [ ] System menu > Sources and Repositories lists KindleTweaks and the community repository as REVIEWED/on; ZenPM plugin repository, Dropbear SSH, KOReader Tategumi and the mkulik fork as COMMUNITY/off.
 - [ ] Turning a community source on needs two taps; after it, Refresh lists its packages (ZenPM plugins appear only if KOReader is installed).
