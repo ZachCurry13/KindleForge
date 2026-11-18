@@ -134,6 +134,16 @@ func main() {
 			os.Exit(1)
 		}
 
+	case "-L":
+		if len(args) < 2 {
+			fmt.Fprintln(os.Stderr, "[KFPM] -L needs a package id")
+			os.Exit(2)
+		}
+		if err := runLaunch(cfg, args[1], args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "[KFPM] cannot launch %s: %v\n", args[1], err)
+			os.Exit(1)
+		}
+
 	case "-g":
 		resetLog(cfg)
 		if err := runSources(cfg, args[1:], verbose); err != nil {
@@ -181,6 +191,7 @@ func main() {
 	case "-abi":
 		abi := detectABI()
 		writeLocalVersion(cfg)
+		fixLaunchers(cfg) // runs each time the app opens: repairs launchers of installed packages
 		fmt.Printf("[KFPM] ABI: %s (platform: %s), KPM: %s at %s, app %s\n", abi, cfg.Platform, backendName(cfg), cfg.KPMPath, readAppVersion(cfg))
 		setStatus("deviceABI", abi)
 
@@ -206,6 +217,7 @@ kfpm -r <ID> [-v]    Uninstall a package
 kfpm -U [-v]         Upgrade every installed package
 kfpm -s [-v]         Sync: refresh catalog definition + repo manifests, check for app update
 kfpm -R <ID> <1-5>   Rate an installed package (sent anonymously; queued if offline)
+kfpm -L <ID> [args]  Launch a package KindleForge installed (what kpm launch does)
 kfpm -g <cmd>        Sources: list | enable <id> | disable <id> | remove <id> | check <url> | add <url>
 kfpm -k scan         Cleanup: scan the Kindle for removable files (read-only)
 kfpm -k apply a,b    Cleanup: move the chosen categories to the trash (restorable)
@@ -268,6 +280,7 @@ func change(c Config, action, id, statusProp string, verbose bool) error {
 // refreshCatalog rewrites catalog.json. With sync it first updates KPM's index
 // and re-downloads the manifests; otherwise it only re-reads local state.
 func refreshCatalog(c Config, sync, verbose bool) error {
+	fixLaunchers(c)
 	rf := loadRepos(c, sync)
 	if sync && !isGingr(c) { // gingrspacecadet/kpm has no repo registry or index to update
 		ensureRepos(c, rf.Repos, verbose)

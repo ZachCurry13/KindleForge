@@ -75,6 +75,9 @@ System menu > **Suggest an App** shows the address of the suggestion form (open 
 - **Community repository:** apps people suggest are added to `catalog/community/manifest.json` with a **sha256 pin**, and that repository is marked `requireHash`: KindleForge refuses any package from it that has no pin or whose download does not match.
 - **Trust:** the install and uninstall scripts come from the repository and run as root on the Kindle, exactly as with any KPM. The repository publishes no checksums, so KindleForge relies on https. I statically reviewed the five current packages' scripts: they only write under `/mnt/us`. Only add repositories you trust.
 
+## Launching KindleTweaks apps (KUALA, Gargoyle, LARK, RAnki)
+These packages come with a launcher file in your Library whose one real line is `kpm launch <name>`, written for KindleModding's KPM. If your Kindle has the *other* KPM, that program is missing and the launcher fails with "`/var/local/kmc/bin/kpm`: not found". KindleForge repairs this itself: every time it opens, and after every install, it rewrites that single line in the launchers of packages **it installed** so they call KindleForge's own `launch` command, which runs the package's `launch.sh` exactly as `kpm launch` would. Only that line, only in top-level `documents/*.sh` files, only for installed packages. If an app installed earlier still shows the error, open KindleForge once (or tap Refresh) and try the launcher again.
+
 ## Logs
 KindleForge keeps a history in **`kindleforge-log.txt`** at the top level of the Kindle's storage (size-limited, newest kept), and the latest run in `.KFPM/last-log.txt`, which **View log** shows. Pull `kindleforge-log.txt` over USB when something goes wrong. **Clean Up Kindle** can move the logs and test reports to the trash.
 

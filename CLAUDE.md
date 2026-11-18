@@ -41,6 +41,9 @@ Catalog definition has `detect` entries (paths all-present, optional versionFile
 - Suggestions: issue form `.github/ISSUE_TEMPLATE/suggest-app.yml` (label `app-suggestion`) -> `scripts/pull_suggestions.py` -> `SUGGESTIONS.md` via `.github/workflows/suggestions.yml` (never interpolates issue text into shell; titles sanitised). `suggestURL` in config.json feeds the app's "Suggest an App" screen. See CONTRIBUTING.md. Issues must be enabled on the repo (forks have them off by default).
 - Tests: `cd KFPM && go test ./...`, `cd ratings-worker && npm test`, `python3 scripts/test_{sync_packages,add_app,pull_suggestions}.py`.
 
+## Launching kpkg packages (`launch.go`)
+KindleModding packages ship scriptlets whose line is `/var/local/kmc/bin/kpm launch <id>`; without that KPM it fails ("kpm: not found"). `kfpm -L <id> [args]` = `kpm launch` (chdir to the package folder, `exec /bin/sh launch.sh`, KPM env). `fixLaunchers` rewrites exactly that line (line-anchored, id-bounded, top-level `documents/*.sh`, regular files <256 KB, only ids in `kpkg/installed.json`, not plugins) to `'<self>' -L <id>`; it runs from `refreshCatalog` and `-abi`, so already-installed packages heal on the next app start. 4 of 5 KindleTweaks packages need it (kinamp does not).
+
 ## Layout scales to the screen
 `style.css` is all `rem` (16px = 1rem). `applyScale()` sets the root font size to `16 * min(width/758, height/1024)` (clamped 1..2.2), because the Kindle's browser reports a bigger viewport than the 758x1024 the design started from. `recomputePageSize()` renders the tallest possible card (`WORST_CARD`), measures it and the page chrome, and sets `pageSize` so every page fits without scrolling. Both run on load, on resize and on every list render.
 

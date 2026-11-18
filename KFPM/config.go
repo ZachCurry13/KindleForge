@@ -27,6 +27,7 @@ type Config struct {
 	ConfigURL   string // KFPM_CONFIG_URL  : remote catalog definition (repos + categories)
 
 	UserRoot string // KFPM_USER_ROOT: the Kindle's user storage (cleanup scope)
+	SelfPath string // path of this KFPM binary (launcher files call it)
 
 	// Which KPM is installed: "modding" (KindleModding/KPM) or "gingr"
 	// (gingrspacecadet/kpm). Empty means modding.
@@ -78,6 +79,7 @@ func loadConfig() Config {
 		ReleasesURL: envOr("KFPM_RELEASES_URL", defaultReleasesURL),
 		ConfigURL:   envOr("KFPM_CONFIG_URL", defaultConfigURL),
 		UserRoot:    envOr("KFPM_USER_ROOT", "/mnt/us"),
+		SelfPath:    selfPath(),
 	}
 	c.GingrList = envOr("KFPM_GINGR_LIST", defaultGingrList)
 	c.GingrMirror = envOr("KFPM_GINGR_MIRRORS", defaultGingrMirrors)
@@ -449,4 +451,16 @@ func loadRepos(c Config, online bool) ReposFile {
 		}
 	}
 	return out
+}
+
+// selfPath is where this program lives, so launcher files can call it.
+func selfPath() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
+	}
+	return exe
 }
