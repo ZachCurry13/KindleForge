@@ -28,7 +28,11 @@ jobs:
 
       - name: Discover
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Repository search is GitHub code search, which wants a personal
+          # access token. Add one as the repository secret DISCOVER_TOKEN (no
+          # scopes needed beyond public read). Without it the job still
+          # refreshes the apps list and keeps the last good repository list.
+          GH_TOKEN: ${{ secrets.DISCOVER_TOKEN || github.token }}
         run: python3 scripts/discover_sources.py
 
       - name: Commit if changed

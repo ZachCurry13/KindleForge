@@ -217,5 +217,195 @@
       "zip": false
     }
   ],
-  "repositories": []
+  "repositories": [
+    {
+      "format": "kpm",
+      "id": "kindletweaks-repo",
+      "known": true,
+      "license": "GPL-3.0",
+      "name": "KindleTweaks",
+      "packages": 5,
+      "pushed": "2026-08-2\u2026",
+      "repo": "KindleTweaks/Repo",
+      "sample": [
+        "KUALA",
+        "Gargoyle",
+        "KinAMP",
+        "LARK",
+        "RAnki"
+      ],
+      "stars": 7,
+      "url": "https://raw.githubusercontent.com/KindleTweaks/Repo/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "mzimandl-koplugins",
+      "known": false,
+      "license": "MIT",
+      "name": "mzimandl KOReader plugins",
+      "packages": 3,
+      "pushed": "2026-11-1\u2026",
+      "repo": "mzimandl/koplugins",
+      "sample": [
+        "Songbook",
+        "Battleships Wi-Fi",
+        "Backgammon Wi-Fi"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/mzimandl/koplugins/master/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "saterz-zenpm-repo",
+      "known": false,
+      "license": "none",
+      "name": "Saterz's Repository",
+      "packages": 2,
+      "pushed": "2026-10-2\u2026",
+      "repo": "Saterz/zenpm-repo",
+      "sample": [
+        "Kanisync",
+        "Diffs"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/Saterz/zenpm-repo/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "aminztw-koreader-tategumi-backup",
+      "known": true,
+      "license": "AGPL-3.0",
+      "name": "KOReader Tategumi",
+      "packages": 2,
+      "pushed": "2026-11-1\u2026",
+      "repo": "aminztw/koreader-tategumi-backup",
+      "sample": [
+        "KOReader Tategumi",
+        "KOReader Tategumi Nightly"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/aminztw/koreader-tategumi-backup/master/kpm/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "bunkford-whispersync-koplugin",
+      "known": false,
+      "license": "none",
+      "name": "bunkford's KOReader plugins",
+      "packages": 2,
+      "pushed": "2026-09-0\u2026",
+      "repo": "bunkford/whispersync.koplugin",
+      "sample": [
+        "Kindle Whispersync",
+        "Read Aloud Edge voices"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/bunkford/whispersync.koplugin/main/zenpm/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "heinrich-xiao-ktex-kpm",
+      "known": false,
+      "license": "none",
+      "name": "KTEX Repository",
+      "packages": 1,
+      "pushed": "2026-10-0\u2026",
+      "repo": "Heinrich-XIAO/ktex-kpm",
+      "sample": [
+        "KTEX - Handwriting to LaTeX Pad"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/Heinrich-XIAO/ktex-kpm/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "jdsnyke-koreader-metadata-scraper",
+      "known": false,
+      "license": "none",
+      "name": "JDsnyke KOReader Plugins",
+      "packages": 1,
+      "pushed": "2026-09-0\u2026",
+      "repo": "JDsnyke/koreader-metadata-scraper",
+      "sample": [
+        "Metadata Scraper"
+      ],
+      "stars": 1,
+      "url": "https://raw.githubusercontent.com/JDsnyke/koreader-metadata-scraper/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "jamesbedson-kindlefetch-kpm-repo",
+      "known": false,
+      "license": "none",
+      "name": "Kindle Fetch Repo",
+      "packages": 1,
+      "pushed": "2026-08-1\u2026",
+      "repo": "JamesBedson/kindlefetch-kpm-repo",
+      "sample": [
+        "KindleFetch"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/JamesBedson/kindlefetch-kpm-repo/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "akshaylahudkar-dropbear-ssh",
+      "known": true,
+      "license": "none",
+      "name": "Dropbear SSH Repo",
+      "packages": 1,
+      "pushed": "2026-09-0\u2026",
+      "repo": "akshaylahudkar/dropbear-ssh",
+      "sample": [
+        "Dropbear SSH"
+      ],
+      "stars": 8,
+      "url": "https://raw.githubusercontent.com/akshaylahudkar/dropbear-ssh/main/manifest.json"
+    },
+    {
+      "format": "zen",
+      "id": "denmaier-netbird-koplugin",
+      "known": false,
+      "license": "MIT",
+      "name": "NetBird for KOReader",
+      "packages": 1,
+      "pushed": "2026-11-1\u2026",
+      "repo": "denMaier/netbird.koplugin",
+      "sample": [
+        "NetBird VPN"
+      ],
+      "stars": 1,
+      "url": "https://raw.githubusercontent.com/denMaier/netbird.koplugin/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "dochoithuvi-ghostguard-kindle",
+      "known": false,
+      "license": "NOASSERTION",
+      "name": "Do Choi Thu Vi GhostGuard Repository",
+      "packages": 1,
+      "pushed": "2026-10-1\u2026",
+      "repo": "dochoithuvi/ghostguard-kindle",
+      "sample": [
+        "DCPRO GhostGuard"
+      ],
+      "stars": 2,
+      "url": "https://raw.githubusercontent.com/dochoithuvi/ghostguard-kindle/main/manifest.json"
+    },
+    {
+      "format": "kpm",
+      "id": "michalkulik-kpm-koreader",
+      "known": true,
+      "license": "none",
+      "name": "KOReader mkulik",
+      "packages": 1,
+      "pushed": "2026-10-3\u2026",
+      "repo": "michalkulik/kpm-koreader",
+      "sample": [
+        "KOReader mkulik"
+      ],
+      "stars": 0,
+      "url": "https://raw.githubusercontent.com/michalkulik/kpm-koreader/main/manifest.json"
+    }
+  ]
 }

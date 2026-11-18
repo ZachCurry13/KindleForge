@@ -136,6 +136,45 @@ class DiscoverTests(unittest.TestCase):
         self.assertEqual(open(out).read(), first)
 
 
+class DegradedRunTests(unittest.TestCase):
+    def run_main(self, d, get):
+        out, md, cfg = (os.path.join(d, n) for n in ("d.json", "D.md", "c.json"))
+        if not os.path.exists(cfg):
+            json.dump({"repos": []}, open(cfg, "w"))
+        return ds.main(["x", "--out", out, "--md", md, "--config", cfg], get=get), out, md
+
+    def test_a_failed_search_never_wipes_a_good_list(self):
+        d = tempfile.mkdtemp()
+        rc, out, md = self.run_main(d, fake(MANIFESTS))
+        self.assertEqual(rc, 0)
+        good = json.load(open(out))["repositories"]
+        self.assertGreaterEqual(len(good), 2)
+        base = fake(MANIFESTS)
+        def no_search(url, token=None, raw=False):  # code search returns nothing, the rest works
+            if "search/code" in url:
+                return {"items": []}
+            return base(url, token, raw)
+        rc, out, md = self.run_main(d, no_search)
+        data = json.load(open(out))
+        self.assertEqual(rc, 0)
+        self.assertEqual(data["repositories"], good)           # kept
+        self.assertTrue(data["repositoriesStale"])             # and flagged
+        self.assertEqual(len(data["apps"]), 3)                 # apps still refreshed
+        self.assertIn("search was unavailable", open(md).read())
+        # a later good run clears the flag
+        rc, out, md = self.run_main(d, fake(MANIFESTS))
+        self.assertNotIn("repositoriesStale", json.load(open(out)))
+
+    def test_first_ever_run_with_no_search_still_reports_apps_only(self):
+        d = tempfile.mkdtemp()
+        base = fake(MANIFESTS)
+        def no_search(url, token=None, raw=False):
+            return {"items": []} if "search/code" in url else base(url, token, raw)
+        rc, out, md = self.run_main(d, no_search)
+        self.assertEqual(rc, 0)
+        self.assertEqual(json.load(open(out))["repositories"], [])
+
+
 class PromoteTests(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.mkdtemp()
